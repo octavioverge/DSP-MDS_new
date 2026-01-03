@@ -14,7 +14,9 @@ const MOCK_REQUESTS = [
         year: '2019',
         damageType: 'DAÑO POR GRANIZO',
         damageLocation: ['TECHO', 'CAPOT'],
-        status: 'Pendiente'
+        status: 'Pendiente',
+        location: 'La Plata',
+        licensePlate: 'AD 123 CD'
     },
     {
         id: '2',
@@ -26,7 +28,9 @@ const MOCK_REQUESTS = [
         year: '2021',
         damageType: 'GOLPE DE ESTACIONAMIENTO',
         damageLocation: ['PUERTA DELANTERA'],
-        status: 'Contactado'
+        status: 'Contactado',
+        location: 'CABA',
+        licensePlate: 'AE 444 GG'
     },
     {
         id: '3',
@@ -38,7 +42,9 @@ const MOCK_REQUESTS = [
         year: '2022',
         damageType: 'CHOQUE MENOR',
         damageLocation: ['PARAGOLPE', 'GUARDABARRO TRASERO'],
-        status: 'Presupuesto Enviado'
+        status: 'Presupuesto Enviado',
+        location: 'Berisso',
+        licensePlate: 'AC 999 WW'
     }
 ];
 
@@ -138,7 +144,7 @@ export default function AdminPage() {
                                     </td>
                                     <td style={{ padding: '1rem' }}>
                                         <div style={{ color: '#D4AF37' }}>{req.damageType}</div>
-                                        <small>{req.damageLocation.join(', ')}</small>
+                                        <small>{(req.damageLocation || []).join(', ')}</small>
                                     </td>
                                     <td style={{ padding: '1rem' }}>
                                         <div>{req.email}</div>
