@@ -1,65 +1,208 @@
-import Image from "next/image";
+import ScrollAnimations from './components/ScrollAnimations';
+import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <ScrollAnimations />
+      {/* Hero Section */}
+      <header id="hero" className="hero">
+        <div className="hero-overlay"></div>
+        <div className="container hero-content fade-in-up">
+          <h2 className="hero-subtitle">DESABOLLADO SIN PINTURA</h2>
+          <h1 className="hero-title">CALIDAD ORIGINAL <br /> <span className="text-gold">SIN REPINTAR</span></h1>
+          <p className="hero-text">
+            Técnico certificado con más de 10 años de experiencia.
+            Recuperamos la estética de tu vehículo conservando la pintura de fábrica.
           </p>
+          <div className="hero-buttons">
+            <Link href="/presupuesto" className="btn-gold">Solicitar Presupuesto</Link>
+            <Link href="#gallery" className="btn-transparent"><i className="fab fa-instagram"></i> Ver Trabajos</Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* Features / Info Bar */}
+      <section className="features-bar">
+        <div className="container features-grid">
+          <div className="feature-item">
+            <i className="fas fa-medal"></i>
+            <h3>Certificado</h3>
+            <p>ACSAA & CESVI</p>
+          </div>
+          <div className="feature-item">
+            <i className="fas fa-award"></i>
+            <h3>Calidad</h3>
+            <p>Acabado Original</p>
+          </div>
+          <div className="feature-item">
+            <i className="fas fa-clock"></i>
+            <h3>Rápido</h3>
+            <p>Sin demoras de pintura</p>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="about section-padding">
+        <div className="container about-grid">
+          <div className="about-content fade-in-left">
+            <h3 className="section-subtitle">SOBRE NOSOTROS</h3>
+            <h2 className="section-title">Excelencia en <span className="text-gold">Sacabollos</span></h2>
+            <div className="gold-line"></div>
+            <p>
+              Soy técnico especialista en el sistema PDR (Paintless Dent Repair), con taller propio en
+              <strong> City Bell</strong>.
+              Mi misión es ofrecer reparaciones profesionales que priorizan la conservación de la pintura original
+              y la calidad del resultado final.
+            </p>
+            <ul className="about-list">
+              <li><i className="fas fa-check-circle text-gold"></i> Formación en carrocerías (CESVI Argentina).</li>
+              <li><i className="fas fa-check-circle text-gold"></i> Capacitación en Gestión de Calidad ISO 9001:2015.
+              </li>
+              <li><i className="fas fa-check-circle text-gold"></i> Certificación profesional por ACSAA.</li>
+              <li><i className="fas fa-check-circle text-gold"></i> Socio Fundador Asociación Civil de Sacabollos.
+              </li>
+            </ul>
+          </div>
+          <div className="about-image fade-in-right">
+            <div className="image-frame">
+              <img src="/assets/icon.jpg" alt="Taller DSP-MDS" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Certificates Section */}
+      <section id="certificates" className="certificates section-padding bg-darker">
+        <div className="container">
+          <div className="text-center mb-5 fade-in-up">
+            <h2 className="section-title">Mis <span className="text-gold">Certificaciones</span></h2>
+            <div className="gold-line mx-auto"></div>
+            <p>Avalado por las instituciones más importantes del sector.</p>
+          </div>
+
+          <div className="certificates-grid">
+            <div className="cert-card fade-in-up delay-100">
+              <img src="/assets/certificado1.jpg" alt="Certificado CESVI/ACSAA" />
+              <div className="cert-info">
+                <h3>Certificación Profesional</h3>
+                <p>ACSAA - Asociación Civil de Sacabollos</p>
+              </div>
+            </div>
+            <div className="cert-card fade-in-up delay-200">
+              <img src="/assets/certificado2.jpg" alt="Certificado CESVI/ACSAA" />
+              <div className="cert-info">
+                <h3>Capacitación Técnica</h3>
+                <p>CESVI Argentina</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Gallery Section */}
+      <section id="gallery" className="gallery section-padding">
+        <div className="container">
+          <div className="text-center mb-5 fade-in-up">
+            <h2 className="section-title">Nuestros <span className="text-gold">Trabajos</span></h2>
+            <div className="gold-line mx-auto"></div>
+            <p>Resultados impecables en todo tipo de vehículos.</p>
+          </div>
+          <div className="gallery-grid">
+            {/* Placeholder 1: Image */}
+            <div className="gallery-item fade-in-up delay-100">
+              <img src="https://images.unsplash.com/photo-1625047509168-a7026f36de04?q=80&w=800&auto=format&fit=crop"
+                alt="Reparación de abolladura" />
+            </div>
+            {/* Placeholder 2: Video */}
+            <div className="gallery-item fade-in-up delay-200">
+              {/* Using an image that LOOKS like a video thumb */}
+              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                <img src="https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=800&auto=format&fit=crop"
+                  alt="Video de reparación" />
+                <div
+                  style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff', fontSize: '3rem', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <i className="fas fa-play"></i>
+                </div>
+              </div>
+            </div>
+            {/* Placeholder 3: Image */}
+            <div className="gallery-item fade-in-up delay-100">
+              <img src="https://images.unsplash.com/photo-1507136566006-cfc505b114fc?q=80&w=800&auto=format&fit=crop"
+                alt="Detalle de reparación" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact & Map Section */}
+      <section id="contact" className="contact section-padding">
+        <div className="container contact-wrapper">
+          <div className="contact-info fade-in-left">
+            <h3 className="section-subtitle">UBICACIÓN</h3>
+            <h2 className="section-title">Estamos en <span className="text-gold">City Bell</span></h2>
+            <div className="gold-line"></div>
+
+            <div className="contact-item">
+              <div className="icon-box">
+                <i className="fas fa-map-marker-alt"></i>
+              </div>
+              <div>
+                <h4>Dirección</h4>
+                <p>Calle 461 B entre 21 y 21 A, City Bell, Buenos Aires</p>
+                <a href="https://www.google.com/maps/place/DSP-MDS+T%C3%89CNICO+SACABOLLOS/@-34.8753842,-58.0616247,17z/data=!3m1!4b1!4m6!3m5!1s0x95a2dfb3cea76169:0x68faf33d8bfcee89!8m2!3d-34.8753842!4d-58.0616247!16s%2Fg%2F11r7n1_pdg?entry=ttu"
+                  target="_blank" rel="noopener noreferrer" className="link-gold">Ver en Google Maps</a>
+              </div>
+            </div>
+
+            <div className="contact-item">
+              <div className="icon-box">
+                <i className="fab fa-whatsapp"></i>
+              </div>
+              <div>
+                <h4>WhatsApp</h4>
+                <p>Enviá fotos de tu vehículo para un presupuesto.</p>
+                <a href="https://wa.me/5492215222729" className="btn-whatsapp">
+                  <i className="fab fa-whatsapp"></i> Contactar por WhatsApp
+                </a>
+              </div>
+            </div>
+
+            <div className="contact-item">
+              <div className="icon-box">
+                <i className="fas fa-clipboard-list"></i>
+              </div>
+              <div>
+                <h4>Presupuesto Online</h4>
+                <p>Completá el formulario para recibir una cotización.</p>
+                <Link href="/presupuesto" className="btn-gold-outline">
+                  Ir al Formulario
+                </Link>
+              </div>
+            </div>
+
+            <div className="contact-item">
+              <div className="icon-box">
+                <i className="fab fa-instagram"></i>
+              </div>
+              <div>
+                <h4>Instagram</h4>
+                <p>Seguinos para ver nuestros últimos trabajos.</p>
+                <a href="https://www.instagram.com/dspmds.arg/" target="_blank" rel="noopener noreferrer"
+                  className="link-gold">@dspmds.arg</a>
+              </div>
+            </div>
+          </div>
+
+          <div className="map-container fade-in-right">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3274.0722379361545!2d-58.0616247!3d-34.8753842!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a2dfb3cea76169%3A0x68faf33d8bfcee89!2sDSP-MDS%20T%C3%89CNICO%20SACABOLLOS!5e0!3m2!1ses!2sar!4v1709480000000!5m2!1ses!2sar"
+              width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
