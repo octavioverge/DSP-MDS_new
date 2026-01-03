@@ -7,8 +7,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 */
 import CarSelector from '../components/CarSelector';
-// import CarSelector from '../components/CarSelector'; // Removed as per instruction
 import ScrollAnimations from '../components/ScrollAnimations';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function Presupuesto() {
     const [formData, setFormData] = useState({
@@ -63,18 +63,67 @@ export default function Presupuesto() {
         setUploadProgress(0);
 
         try {
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const uploadedPhotoUrls: string[] = [];
 
-            console.log('Form Submitted (Simulation):', {
-                ...formData,
-                files: files ? files.length : 0
-            });
+            // 1. Upload Images to Supabase Storage
+            if (files && files.length > 0) {
+                const totalFiles = files.length;
+                let processedFiles = 0;
 
-            // Simulation Progress
+                for (let i = 0; i < totalFiles; i++) {
+                    const file = files[i];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+                    const filePath = `${fileName}`;
+
+                    const { error: uploadError } = await supabase.storage
+                        .from('presupuestos')
+                        .upload(filePath, file);
+
+                    if (uploadError) {
+                        console.error('Error uploading file:', uploadError);
+                        console.error('Error details:', uploadError.message);
+                        continue; // Skip failed upload
+                    }
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('presupuestos')
+                        .getPublicUrl(filePath);
+
+                    uploadedPhotoUrls.push(publicUrl);
+
+                    processedFiles++;
+                    setUploadProgress(Math.round((processedFiles / totalFiles) * 80)); // 80% for upload steps
+                }
+            }
+
+            // 2. Insert Data into Supabase Database
+            const { error: dbError } = await supabase
+                .from('requests')
+                .insert([
+                    {
+                        name: formData.name,
+                        phone: formData.phone,
+                        email: formData.email,
+                        location: formData.location, // Added location field
+                        make_model: formData.makeModel,
+                        year: formData.year,
+                        damage_type: formData.damageType,
+                        damage_location: formData.damageLocation,
+                        photos: uploadedPhotoUrls,
+                        description: formData.description, // Added description
+                        status: 'Pendiente'
+                    }
+                ]);
+
+            if (dbError) {
+                console.error('Database Insert Error:', dbError);
+                console.error('Database Error details:', dbError.message, dbError.details);
+                throw dbError;
+            }
+
             setUploadProgress(100);
-
-            alert('¡Presupuesto enviado (Simulación)! Los datos se han guardado localmente (consola) por ahora.');
+            alert('¡Presupuesto enviado correctamente! Nos pondremos en contacto pronto.');
 
             // Reset form
             setFormData({
@@ -97,9 +146,11 @@ export default function Presupuesto() {
             const fileInput = document.getElementById('attachment') as HTMLInputElement;
             if (fileInput) fileInput.value = '';
 
-        } catch (error) {
-            console.error("Error sending budget request: ", error);
-            alert("Hubo un error al enviar el formulario.");
+        } catch (error: any) {
+            console.error("Full Error Object:", error);
+            console.error("Error message:", error.message || 'No message');
+            console.error("Error stack:", error.stack || 'No stack');
+            alert(`Hubo un error: ${error.message || 'Error desconocido'}`);
         } finally {
             setIsSubmitting(false);
         }

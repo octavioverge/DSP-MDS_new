@@ -61,8 +61,7 @@ export default function Home() {
               <li><i className="fas fa-check-circle text-gold"></i> Capacitación en Gestión de Calidad ISO 9001:2015.
               </li>
               <li><i className="fas fa-check-circle text-gold"></i> Certificación profesional por ACSAA.</li>
-              <li><i className="fas fa-check-circle text-gold"></i> Socio Fundador Asociación Civil de Sacabollos.
-              </li>
+
             </ul>
           </div>
           <div className="about-image fade-in-right">
