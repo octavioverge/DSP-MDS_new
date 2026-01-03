@@ -39,6 +39,43 @@ export default function AdminPage() {
     const [showBudgetForm, setShowBudgetForm] = useState(false);
     const [budgetItems, setBudgetItems] = useState<{ desc: string; price: number }[]>([{ desc: '', price: 0 }]);
 
+    // Search & Filter
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('Todos');
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Request; direction: 'asc' | 'desc' }>({ key: 'created_at', direction: 'desc' });
+
+    const filteredRequests = requests.filter(req => {
+        const term = searchTerm.toLowerCase();
+        const matchesSearch = (
+            (req.name || '').toLowerCase().includes(term) ||
+            (req.make_model || '').toLowerCase().includes(term) ||
+            (req.email || '').toLowerCase().includes(term) ||
+            (req.location || '').toLowerCase().includes(term) ||
+            (req.phone || '').includes(term)
+        );
+        const matchesStatus = statusFilter === 'Todos' || req.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    }).sort((a, b) => {
+        const aValue = a[sortConfig.key] || '';
+        const bValue = b[sortConfig.key] || '';
+
+        if (aValue < bValue) {
+            return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+    });
+
+    const handleSort = (key: keyof Request) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
     useEffect(() => {
         const session = localStorage.getItem('admin_session');
         if (session === 'true') {
@@ -331,21 +368,53 @@ export default function AdminPage() {
                     </button>
                 </header>
 
+                {/* Search & Filters */}
+                <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre, cliente, auto..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #444', backgroundColor: '#222', color: '#fff' }}
+                    />
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        style={{ padding: '10px', borderRadius: '5px', border: '1px solid #444', backgroundColor: '#222', color: '#fff', minWidth: '150px' }}
+                    >
+                        <option value="Todos">Todos los estados</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Contactado">Contactado</option>
+                        <option value="Presupuesto Enviado">Presupuesto Enviado</option>
+                        <option value="Turno Agendado">Turno Agendado</option>
+                        <option value="Reparado">Reparado</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+
                 <div className="table-responsive" style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                         <thead>
                             <tr style={{ borderBottom: '2px solid #D4AF37', textAlign: 'left' }}>
-                                <th style={{ padding: '1rem' }}>Fecha</th>
-                                <th style={{ padding: '1rem' }}>Cliente</th>
-                                <th style={{ padding: '1rem' }}>Vehículo</th>
-                                <th style={{ padding: '1rem' }}>Estado</th>
+                                <th style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => handleSort('created_at')}>
+                                    Fecha {sortConfig.key === 'created_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => handleSort('name')}>
+                                    Cliente {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => handleSort('make_model')}>
+                                    Vehículo {sortConfig.key === 'make_model' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => handleSort('status')}>
+                                    Estado {sortConfig.key === 'status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
                                 <th style={{ padding: '1rem' }}>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Cargando...</td></tr>
-                            ) : requests.map(req => (
+                            ) : filteredRequests.map(req => (
                                 <tr key={req.id} style={{ borderBottom: '1px solid #333' }}>
                                     <td style={{ padding: '1rem' }}>{new Date(req.created_at).toLocaleDateString()}</td>
                                     <td style={{ padding: '1rem' }}>
@@ -467,7 +536,7 @@ export default function AdminPage() {
                                     <button
                                         onClick={() => setShowBudgetForm(!showBudgetForm)}
                                         className="btn-gold"
-                                        style={{ width: '100%', marginBottom: '10px', background: '#222', border: '1px solid #D4AF37', padding: '10px' }}
+                                        style={{ width: '100%', marginBottom: '10px', background: '#222', border: '1px solid #D4AF37', padding: '10px', color: '#D4AF37' }}
                                     >
                                         <i className="fas fa-file-invoice-dollar"></i> {showBudgetForm ? 'Cancelar Presupuesto' : 'Crear Presupuesto PDF'}
                                     </button>

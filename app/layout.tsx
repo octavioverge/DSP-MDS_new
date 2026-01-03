@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Montserrat, Playfair_Display } from "next/font/google";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -34,9 +32,7 @@ export default function RootLayout({
       <body
         className={`${montserrat.variable} ${playfair.variable} antialiased`}
       >
-        <Navbar />
         {children}
-        <Footer />
       </body>
     </html>
   );

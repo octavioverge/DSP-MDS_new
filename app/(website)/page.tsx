@@ -1,4 +1,4 @@
-import ScrollAnimations from './components/ScrollAnimations';
+import ScrollAnimations from '@/app/components/ScrollAnimations';
 import Link from 'next/link';
 
 export default function Home() {
@@ -15,9 +15,8 @@ export default function Home() {
             Técnico certificado con más de 10 años de experiencia.
             Recuperamos la estética de tu vehículo conservando la pintura de fábrica.
           </p>
-          <div className="hero-buttons">
+          <div className="hero-buttons" style={{ justifyContent: 'center' }}>
             <Link href="/presupuesto" className="btn-gold">Solicitar Presupuesto</Link>
-            <Link href="#gallery" className="btn-transparent"><i className="fab fa-instagram"></i> Ver Trabajos</Link>
           </div>
         </div>
       </header>

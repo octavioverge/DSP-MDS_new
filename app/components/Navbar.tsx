@@ -32,6 +32,21 @@ export default function Navbar() {
         document.body.style.overflow = 'auto';
     };
 
+    const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, id: string) => {
+        // If we are on the home page, manually scroll
+        if (pathname === '/' || pathname.startsWith('/#')) {
+            e.preventDefault();
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                // Optional: Update URL without reloading or jumping
+                window.history.pushState(null, '', `/#${id}`);
+            }
+        }
+        // If not on home page, let the Link handle navigation to /#id naturally
+        closeMenu();
+    };
+
     // Helper to determine active state or adjust link path if needed
     // For this simple site, absolute paths /#section work best
 
@@ -44,10 +59,10 @@ export default function Navbar() {
                         <span>DSP-MDS</span>
                     </div>
                     <ul className="nav-links">
-                        <li><Link href="/#hero">Inicio</Link></li>
-                        <li><Link href="/#about">Nosotros</Link></li>
-                        <li><Link href="/#certificates">Certificaciones</Link></li>
-                        <li><Link href="/#gallery">Trabajos</Link></li>
+                        <li><Link href="/">Inicio</Link></li>
+                        <li><Link href="/#about" onClick={(e) => handleScroll(e, 'about')}>Nosotros</Link></li>
+                        <li><Link href="/#certificates" onClick={(e) => handleScroll(e, 'certificates')}>Certificaciones</Link></li>
+                        <li><Link href="/#gallery" onClick={(e) => handleScroll(e, 'gallery')}>Trabajos</Link></li>
                         <li><Link href="/presupuesto" className="btn-gold-outline">Solicitar Presupuesto</Link></li>
                     </ul>
                     <div className="hamburger" onClick={toggleMenu}>
@@ -59,10 +74,10 @@ export default function Navbar() {
             {/* Mobile Menu Overlay */}
             <div className={`mobile-menu ${isOpen ? 'active' : ''}`}>
                 <i className="fas fa-times close-menu" onClick={toggleMenu}></i>
-                <Link href="/#hero" onClick={closeMenu}>Inicio</Link>
-                <Link href="/#about" onClick={closeMenu}>Nosotros</Link>
-                <Link href="/#certificates" onClick={closeMenu}>Certificaciones</Link>
-                <Link href="/#gallery" onClick={closeMenu}>Trabajos</Link>
+                <Link href="/" onClick={closeMenu}>Inicio</Link>
+                <Link href="/#about" onClick={(e) => handleScroll(e, 'about')}>Nosotros</Link>
+                <Link href="/#certificates" onClick={(e) => handleScroll(e, 'certificates')}>Certificaciones</Link>
+                <Link href="/#gallery" onClick={(e) => handleScroll(e, 'gallery')}>Trabajos</Link>
                 <Link href="/presupuesto" onClick={closeMenu}>Presupuesto</Link>
                 <Link href="/#contact" onClick={closeMenu}>Contacto</Link>
             </div>

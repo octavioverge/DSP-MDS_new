@@ -6,8 +6,8 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 */
-import CarSelector from '../components/CarSelector';
-import ScrollAnimations from '../components/ScrollAnimations';
+import CarSelector from '@/app/components/CarSelector';
+import ScrollAnimations from '@/app/components/ScrollAnimations';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function Presupuesto() {
