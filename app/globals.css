@@ -194,7 +194,7 @@ img {
   letter-spacing: 1px;
 }
 
-.nav-links a:hover {
+.nav-links a:not(.btn-gold-outline):hover {
   color: var(--primary-gold);
 }
 

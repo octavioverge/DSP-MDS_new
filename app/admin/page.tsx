@@ -228,13 +228,28 @@ export default function AdminPage() {
         doc.setFillColor(20, 20, 20); // Dark background header
         doc.rect(0, 0, 210, 40, 'F');
 
+        // Add Logo
+        try {
+            const response = await fetch('/assets/icon.jpg');
+            const blob = await response.blob();
+            const base64 = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            });
+            // Add circular clipping if desired, but standard square/rect for now
+            doc.addImage(base64, 'JPEG', 10, 5, 30, 30);
+        } catch (err) {
+            console.error("Error loading logo:", err);
+        }
+
         doc.setTextColor(212, 175, 55); // Gold color
         doc.setFontSize(22);
-        doc.text("DSP-MDS", 15, 20);
+        doc.text("DSP-MDS", 50, 20);
 
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(12);
-        doc.text("Técnico Sacabollos - Desabollado Sin Pintura", 15, 28);
+        doc.text("Técnico Sacabollos - Desabollado Sin Pintura", 50, 28);
 
         doc.setFontSize(10);
         doc.text("Calle 461 B entre 21 y 21 A, City Bell", 140, 15);
