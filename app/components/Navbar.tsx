@@ -56,14 +56,42 @@ export default function Navbar() {
                 <div className="container nav-container">
                     <div className="logo">
                         <img src="/assets/icon.jpg" alt="DSP-MDS Logo" />
-                        <span>DSP-MDS</span>
+                        <span className="hide-on-mobile">DSP-MDS</span>
                     </div>
                     <ul className="nav-links">
+                        <li>
+                            <Link href="/cobertura" style={{
+                                border: '1px solid #D4AF37',
+                                padding: '8px 12px',
+                                borderRadius: '4px',
+                                color: '#D4AF37',
+                                display: 'inline-block',
+                                textAlign: 'center',
+                                fontSize: '0.8rem',
+                                lineHeight: '1.2'
+                            }}>
+                                COBERTURA
+                            </Link>
+                        </li>
                         <li><Link href="/">Inicio</Link></li>
                         <li><Link href="/#about" onClick={(e) => handleScroll(e, 'about')}>Nosotros</Link></li>
                         <li><Link href="/#certificates" onClick={(e) => handleScroll(e, 'certificates')}>Certificaciones</Link></li>
                         <li><Link href="/#gallery" onClick={(e) => handleScroll(e, 'gallery')}>Trabajos</Link></li>
-                        <li><Link href="/presupuesto" className="btn-gold-outline">Solicitar Presupuesto</Link></li>
+                        <li>
+                            <Link href="/formacion" style={{
+                                border: '1px solid #D4AF37',
+                                padding: '8px 12px',
+                                borderRadius: '4px',
+                                color: '#D4AF37',
+                                display: 'inline-block',
+                                textAlign: 'center',
+                                fontSize: '0.8rem',
+                                lineHeight: '1.2'
+                            }}>
+                                FORMACIÓN
+                            </Link>
+                        </li>
+                        <li><Link href="/presupuesto" className="btn-gold-outline">Presupuesto</Link></li>
                     </ul>
                     <div className="hamburger" onClick={toggleMenu}>
                         <i className="fas fa-bars"></i>
@@ -74,10 +102,12 @@ export default function Navbar() {
             {/* Mobile Menu Overlay */}
             <div className={`mobile-menu ${isOpen ? 'active' : ''}`}>
                 <i className="fas fa-times close-menu" onClick={toggleMenu}></i>
+                <Link href="/cobertura" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>COBERTURA DSP</Link>
                 <Link href="/" onClick={closeMenu}>Inicio</Link>
                 <Link href="/#about" onClick={(e) => handleScroll(e, 'about')}>Nosotros</Link>
                 <Link href="/#certificates" onClick={(e) => handleScroll(e, 'certificates')}>Certificaciones</Link>
                 <Link href="/#gallery" onClick={(e) => handleScroll(e, 'gallery')}>Trabajos</Link>
+                <Link href="/formacion" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>FORMACIÓN DSP</Link>
                 <Link href="/presupuesto" onClick={closeMenu}>Presupuesto</Link>
                 <Link href="/#contact" onClick={closeMenu}>Contacto</Link>
             </div>
