@@ -517,7 +517,7 @@ export default function AdminPage() {
                 3: { cellWidth: 25 }, // Complejidad
                 4: { cellWidth: 'auto', halign: 'right' }  // Costo
             }
-        });
+        } as any);
 
         // --- Footer Logic (Pagination Safe) ---
         let finalY = (doc as any).lastAutoTable.finalY + 15;
