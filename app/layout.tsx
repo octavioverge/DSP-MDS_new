@@ -23,11 +23,11 @@ export const metadata: Metadata = {
   keywords: ["sacabollos", "city bell", "la plata", "granizo", "desabollado sin pintura", "PDR", "chapista", "automotor", "bollos", "estética vehicular", "DSP-MDS"],
   authors: [{ name: "Matías Da Silva" }],
   creator: "Matías Da Silva",
-  metadataBase: new URL('https://desabolladosinpinturamds.com.ar'), // Replace with actual domain if different later
+  metadataBase: new URL('https://www.desabolladosinpinturamds.com.ar'), // Replace with actual domain if different later
   openGraph: {
     title: "DSP-MDS | Técnico Sacabollos - Calidad Original",
     description: "Recuperamos la estética de tu vehículo sin repintar. Especialistas en granizo y bollos de estacionamiento en City Bell.",
-    url: 'https://desabolladosinpinturamds.com.ar',
+    url: 'https://www.desabolladosinpinturamds.com.ar',
     siteName: 'DSP-MDS',
     locale: 'es_AR',
     type: 'website',
@@ -79,9 +79,9 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "AutoRepair",
               "name": "DSP-MDS Técnico Sacabollos",
-              "image": "https://desabolladosinpinturamds.com.ar/assets/logoHeader.png",
-              "@id": "https://desabolladosinpinturamds.com.ar",
-              "url": "https://desabolladosinpinturamds.com.ar",
+              "image": "https://www.desabolladosinpinturamds.com.ar/assets/logoHeader.png",
+              "@id": "https://www.desabolladosinpinturamds.com.ar",
+              "url": "https://www.desabolladosinpinturamds.com.ar",
               "telephone": "+5492215222729",
               "address": {
                 "@type": "PostalAddress",

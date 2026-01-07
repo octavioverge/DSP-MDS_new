@@ -1,12 +1,6 @@
 'use client';
 
 import { useState, ChangeEvent, FormEvent } from 'react';
-/* Firebase removed
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
-*/
-import CarSelector from '@/app/components/CarSelector';
 import ScrollAnimations from '@/app/components/ScrollAnimations';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -16,15 +10,14 @@ export default function Presupuesto() {
         phone: '',
         location: '',
         email: '',
-        makeModel: '', // Unified as per user request
+        makeModel: '',
         year: '',
         licensePlate: '',
         damageType: 'ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)',
-        damageLocation: [] as string[], // Multi-select simulation or checkboxes
+        damageLocation: [] as string[],
         description: ''
     });
 
-    // Using simple string array for damage locations instead of 3D selector for now
     const damageLocations = [
         "CAPOT", "TECHO", "GUARDABARROS DELANTERO", "GUARDABARRO TRASERO",
         "PUERTA DELANTERA", "PUERTA TRASERA", "TAPA/PORTON- BAÚL",
@@ -82,8 +75,7 @@ export default function Presupuesto() {
 
                     if (uploadError) {
                         console.error('Error uploading file:', uploadError);
-                        console.error('Error details:', uploadError.message);
-                        continue; // Skip failed upload
+                        continue;
                     }
 
                     const { data: { publicUrl } } = supabase.storage
@@ -91,34 +83,62 @@ export default function Presupuesto() {
                         .getPublicUrl(filePath);
 
                     uploadedPhotoUrls.push(publicUrl);
-
                     processedFiles++;
-                    setUploadProgress(Math.round((processedFiles / totalFiles) * 80)); // 80% for upload steps
+                    setUploadProgress(Math.round((processedFiles / totalFiles) * 80));
                 }
             }
 
-            // 2. Insert Data into Supabase Database
-            const { error: dbError } = await supabase
-                .from('requests')
-                .insert([
-                    {
+            // 2. Identify or Create Client
+            let clientId: string | null = null;
+
+            // Check if client exists by email
+            const { data: existingClient, error: searchError } = await supabase
+                .from('clients')
+                .select('id')
+                .eq('email', formData.email)
+                .maybeSingle(); // Returns null if not found, instead of error
+
+            if (searchError) throw searchError;
+
+            if (existingClient) {
+                clientId = existingClient.id;
+            } else {
+                // Create new client
+                const { data: newClient, error: createError } = await supabase
+                    .from('clients')
+                    .insert([{
                         name: formData.name,
                         phone: formData.phone,
                         email: formData.email,
-                        location: formData.location, // Added location field
+                        location: formData.location
+                    }])
+                    .select()
+                    .single();
+
+                if (createError) throw createError;
+                clientId = newClient.id;
+            }
+
+            if (!clientId) throw new Error("No se pudo obtener el ID del cliente.");
+
+            // 3. Insert Service Request (Puntual)
+            const { error: dbError } = await supabase
+                .from('service_puntual')
+                .insert([
+                    {
+                        client_id: clientId,
                         make_model: formData.makeModel,
                         year: formData.year,
                         damage_type: formData.damageType,
                         damage_location: formData.damageLocation,
                         photos: uploadedPhotoUrls,
-                        description: formData.description, // Added description
+                        description: formData.description,
                         status: 'Pendiente'
                     }
                 ]);
 
             if (dbError) {
                 console.error('Database Insert Error:', dbError);
-                console.error('Database Error details:', dbError.message, dbError.details);
                 throw dbError;
             }
 
@@ -141,15 +161,11 @@ export default function Presupuesto() {
 
             setFiles(null);
             setUploadProgress(0);
-
-            // Reset file input
             const fileInput = document.getElementById('attachment') as HTMLInputElement;
             if (fileInput) fileInput.value = '';
 
         } catch (error: any) {
             console.error("Full Error Object:", error);
-            console.error("Error message:", error.message || 'No message');
-            console.error("Error stack:", error.stack || 'No stack');
             alert(`Hubo un error: ${error.message || 'Error desconocido'}`);
         } finally {
             setIsSubmitting(false);
@@ -249,13 +265,6 @@ export default function Presupuesto() {
                                     ))}
                                 </div>
                             </div>
-
-                            {/* Temporarily Hidden 3D Selector
-                            <div className="form-group">
-                                <label>Seleccioná las zonas afectadas:</label>
-                                <CarSelector onSelectionChange={setSelectedParts} />
-                            </div>
-                            */}
 
                             <div className="form-group">
                                 <label htmlFor="attachment">FOTOS DEL DAÑO *</label>

@@ -1,5 +1,6 @@
 import ScrollAnimations from '@/app/components/ScrollAnimations';
 import Link from 'next/link';
+import Image from 'next/image';
 import ReviewsCarousel from '@/app/components/ReviewsCarousel';
 
 export default function Home() {
@@ -8,13 +9,19 @@ export default function Home() {
       <ScrollAnimations />
       {/* Hero Section */}
       <header id="hero" className="hero">
+        <Image
+          src="https://images.unsplash.com/photo-1626847037657-fd3622613ce3?q=80&w=1920&auto=format&fit=crop"
+          alt="Taller de Desabollado Sin Pintura en City Bell - Reparación de Granizo"
+          fill
+          priority
+          style={{ objectFit: 'cover', zIndex: 0 }}
+        />
         <div className="hero-overlay"></div>
         <div className="container hero-content fade-in-up">
-          <h2 className="hero-subtitle">DESABOLLADO SIN PINTURA</h2>
+          <h2 className="hero-subtitle">DESABOLLADO SIN PINTURA EN CITY BELL</h2>
           <h1 className="hero-title">CALIDAD ORIGINAL <br /> <span className="text-gold">SIN REPINTAR</span></h1>
           <p className="hero-text">
-            Técnico certificado con más de 10 años de experiencia.
-            Recuperamos la estética de tu vehículo conservando la pintura de fábrica.
+            Técnico Sacabollos certificado. Recuperamos la estética de tu vehículo conservando la pintura de fábrica. Especialistas en granizo y bollos de estacionamiento en La Plata.
           </p>
           <div className="hero-buttons" style={{ justifyContent: 'center' }}>
             <Link href="/presupuesto" className="btn-gold">Solicitar Presupuesto</Link>
@@ -51,10 +58,8 @@ export default function Home() {
             <h2 className="section-title">Excelencia en <span className="text-gold">Sacabollos</span></h2>
             <div className="gold-line"></div>
             <p>
-              Soy técnico especialista en el sistema PDR (Paintless Dent Repair), con taller propio en
-              <strong> City Bell</strong>.
-              Mi misión es ofrecer reparaciones profesionales que priorizan la conservación de la pintura original
-              y la calidad del resultado final.
+              Soy técnico especialista en el sistema PDR (Paintless Dent Repair), con taller propio de <strong>Sacabollos en City Bell</strong>.
+              Mi misión es ofrecer reparaciones profesionales que priorizan la conservación de la pintura original y la calidad del resultado final.
             </p>
             <ul className="about-list">
               <li><i className="fas fa-check-circle text-gold"></i> Formación en carrocerías (CESVI Argentina).</li>
@@ -83,14 +88,14 @@ export default function Home() {
 
           <div className="certificates-grid">
             <div className="cert-card fade-in-up delay-100">
-              <img src="/assets/certificado1.jpg" alt="Certificado CESVI/ACSAA" />
+              <img src="/assets/certificado1.jpg" alt="Certificado Técnico Sacabollos ACSAA" />
               <div className="cert-info">
                 <h3>Certificación Profesional</h3>
                 <p>ACSAA - Asociación Civil de Sacabollos</p>
               </div>
             </div>
             <div className="cert-card fade-in-up delay-200">
-              <img src="/assets/certificado2.jpg" alt="Certificado CESVI/ACSAA" />
+              <img src="/assets/certificado2.jpg" alt="Certificado Técnico CESVI Argentina - Carrocería" />
               <div className="cert-info">
                 <h3>Capacitación Técnica</h3>
                 <p>CESVI Argentina</p>

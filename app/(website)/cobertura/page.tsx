@@ -1,7 +1,20 @@
+'use client';
 import Link from 'next/link';
+import { useState } from 'react';
 import ScrollAnimations from '../../components/ScrollAnimations';
+import CoberturaForm from '../../components/CoberturaForm';
 
 export default function CoberturaPage() {
+    const [preSelectedPlan, setPreSelectedPlan] = useState<string | null>(null);
+
+    const handlePlanClick = (planName: string) => {
+        setPreSelectedPlan(planName);
+        const element = document.getElementById('application-form');
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     return (
         <main>
             <div className="internal-page-spacer"></div>
@@ -60,7 +73,7 @@ export default function CoberturaPage() {
                                 <li className="mb-2"><i className="fas fa-check text-gold mr-2"></i> 1 intervención mensual (por cada ítem)</li>
                             </ul>
                             <div className="mt-4 text-center">
-                                <Link href="#" className="btn-gold" target="_blank">PLAN BASE</Link>
+                                <button onClick={() => handlePlanClick('Plan Base')} className="btn-gold" style={{ border: 'none', width: '100%' }}>SELECCIONAR PLAN BASE</button>
                             </div>
                         </div>
 
@@ -74,7 +87,7 @@ export default function CoberturaPage() {
                                 <li className="mb-2"><i className="fas fa-check text-gold mr-2"></i> Los vehículos deberán estar declarados al momento de la suscripción</li>
                             </ul>
                             <div className="mt-4 text-center">
-                                <Link href="#" className="btn-gold-outline" target="_blank">PLAN INTERMEDIO</Link>
+                                <button onClick={() => handlePlanClick('Plan Intermedio')} className="btn-gold-outline" style={{ width: '100%' }}>SELECCIONAR PLAN INTERMEDIO</button>
                             </div>
                         </div>
 
@@ -90,7 +103,7 @@ export default function CoberturaPage() {
                                 <li className="mb-2"><i className="fas fa-check text-gold mr-2"></i> Cobertura ampliada (choque menor)</li>
                             </ul>
                             <div className="mt-4 text-center">
-                                <Link href="#" className="btn-gold" target="_blank">PLAN PREMIUM</Link>
+                                <button onClick={() => handlePlanClick('Plan Premium')} className="btn-gold" style={{ border: 'none', width: '100%' }}>SELECCIONAR PLAN PREMIUM</button>
                             </div>
                         </div>
                     </div>
@@ -137,6 +150,8 @@ export default function CoberturaPage() {
                             <li><i className="fas fa-info-circle text-gold"></i> La atención a domicilio aplica solo a vehículos registrados en el Plan Premium.</li>
                         </ul>
                     </div>
+
+                    <CoberturaForm preSelectedPlan={preSelectedPlan} />
 
                     <div className="text-center mt-5 pt-3 fade-in-up">
                         <p className="text-muted small">
