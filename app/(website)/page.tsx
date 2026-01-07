@@ -173,7 +173,7 @@ export default function Home() {
                 <h4>Presupuesto Online</h4>
                 <p>Completá el formulario para recibir una cotización.</p>
                 <Link href="/presupuesto" className="btn-gold-outline">
-                  Ir al Formulario
+                  SOLICITAR PRESUPUESTO
                 </Link>
               </div>
             </div>

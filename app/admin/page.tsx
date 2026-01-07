@@ -378,55 +378,19 @@ export default function AdminPage() {
         doc.setFillColor(20, 20, 20); // Dark header
         doc.rect(0, 0, 210, 40, 'F');
 
-        // Logo & Watermark
+        // Logo & Watermark Data
+        let logoBase64 = '';
         try {
             const response = await fetch('/assets/logoHeader.png');
             const blob = await response.blob();
-            const base64 = await new Promise<string>((resolve) => {
+            logoBase64 = await new Promise<string>((resolve) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result as string);
                 reader.readAsDataURL(blob);
             });
 
-            // Header Logo
-            doc.addImage(base64, 'PNG', 15, 5, 30, 30); // Adjusted for new logo
-
-            // Watermark
-            // To make it subtle, we can't easily change opacity in standard jsPDF without GState or plugins safely in this env.
-            // But we can place it behind text.
-            // If the image itself isn't pre-faded, it might be strong. 
-            // We will try to add it centered.
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const imgWidth = 100;
-            const imgHeight = 100;
-            const x = (pageWidth - imgWidth) / 2;
-            const y = (pageHeight - imgHeight) / 2;
-
-            // Verify if GState is available in this version of jsPDF, otherwise just add it.
-            // Assuming we can't rely on advanced features, we just add it first? 
-            // Actually, adding it first implies z-index? No, PDF paints in order.
-            // So we should have added it BEFORE the header rect if we wanted it behind everything, 
-            // but the header rect is opaque.
-            // We want it behind the table transparency?
-            // Let's add it right after the header, but before text.
-
-            // Note: If the user wants it "sutil" (subtle), and we can't control opacity, 
-            // it relies on the image being subtle. If not, it might make text hard to read.
-            // I'll add it here.
-
-            // Attempting GSstate for transparency if supported
-            try {
-                // @ts-ignore
-                doc.setGState(new doc.GState({ opacity: 0.1 }));
-                doc.addImage(base64, 'PNG', x, y, imgWidth, imgHeight);
-                // @ts-ignore
-                doc.setGState(new doc.GState({ opacity: 1.0 }));
-            } catch (e) {
-                // Fallback if GState fails, just add it (might be strong)
-                // or skip if risky
-                doc.addImage(base64, 'PNG', x, y, imgWidth, imgHeight);
-            }
+            // Header Logo (Draw immediately)
+            doc.addImage(logoBase64, 'PNG', 15, 5, 30, 30);
 
         } catch (err) {
             console.error("Error loading logo:", err);
@@ -564,10 +528,38 @@ export default function AdminPage() {
         doc.text("Firma del Técnico (MDS): MATÍAS DA SILVA", 120, finalY);
         doc.line(120, finalY - 5, 200, finalY - 5);
 
-        // Save
-        const pdfBlob = doc.output('blob');
+
+
+        // Draw Watermark on ALL pages (Last step to ensure it's on top of opaque tables if any, or use transparency)
+        if (logoBase64) {
+            const pageCount = (doc as any).internal.getNumberOfPages();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const imgWidth = 100;
+            const imgHeight = 100;
+            const x = (pageWidth - imgWidth) / 2;
+            const y = (pageHeight - imgHeight) / 2;
+
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                try {
+                    // @ts-ignore
+                    doc.setGState(new doc.GState({ opacity: 0.1 })); // Very transparent
+                    doc.addImage(logoBase64, 'PNG', x, y, imgWidth, imgHeight);
+                    // @ts-ignore
+                    doc.setGState(new doc.GState({ opacity: 1.0 }));
+                } catch (e) {
+                    // Fallback
+                    doc.addImage(logoBase64, 'PNG', x, y, imgWidth, imgHeight);
+                }
+            }
+        }
+
+        // Save locally
         const pdfFileName = `Presupuesto_${budgetData.clientName.replace(/\s+/g, '_')}.pdf`;
         doc.save(pdfFileName);
+
+        const pdfBlob = doc.output('blob');
 
         // Upload
         try {
