@@ -55,10 +55,14 @@ export default function Navbar() {
             <nav className="navbar" style={scrolled ? { background: 'rgba(18, 18, 18, 1)', padding: '10px 0' } : {}}>
                 <div className="container nav-container">
                     <div className="logo">
-                        <img src="/assets/icon.jpg" alt="DSP-MDS Logo" />
-                        <span className="hide-on-mobile">DSP-MDS</span>
+                        <Link href="/" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
+                            <img src="/assets/logoHeader.png" alt="DSP-MDS Logo" style={{ height: '80px', width: 'auto' }} />
+                        </Link>
                     </div>
                     <ul className="nav-links">
+                        <li><Link href="/">Inicio</Link></li>
+                        <li><Link href="/#about" onClick={(e) => handleScroll(e, 'about')}>Nosotros</Link></li>
+                        <li><Link href="/#certificates" onClick={(e) => handleScroll(e, 'certificates')}>Certificaciones</Link></li>
                         <li>
                             <Link href="/cobertura" style={{
                                 border: '1px solid #D4AF37',
@@ -73,10 +77,7 @@ export default function Navbar() {
                                 COBERTURA
                             </Link>
                         </li>
-                        <li><Link href="/">Inicio</Link></li>
-                        <li><Link href="/#about" onClick={(e) => handleScroll(e, 'about')}>Nosotros</Link></li>
-                        <li><Link href="/#certificates" onClick={(e) => handleScroll(e, 'certificates')}>Certificaciones</Link></li>
-                        <li><Link href="/#gallery" onClick={(e) => handleScroll(e, 'gallery')}>Trabajos</Link></li>
+
                         <li>
                             <Link href="/formacion" style={{
                                 border: '1px solid #D4AF37',
@@ -102,11 +103,10 @@ export default function Navbar() {
             {/* Mobile Menu Overlay */}
             <div className={`mobile-menu ${isOpen ? 'active' : ''}`}>
                 <i className="fas fa-times close-menu" onClick={toggleMenu}></i>
-                <Link href="/cobertura" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>COBERTURA DSP</Link>
                 <Link href="/" onClick={closeMenu}>Inicio</Link>
                 <Link href="/#about" onClick={(e) => handleScroll(e, 'about')}>Nosotros</Link>
                 <Link href="/#certificates" onClick={(e) => handleScroll(e, 'certificates')}>Certificaciones</Link>
-                <Link href="/#gallery" onClick={(e) => handleScroll(e, 'gallery')}>Trabajos</Link>
+                <Link href="/cobertura" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>COBERTURA DSP</Link>
                 <Link href="/formacion" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>FORMACIÓN DSP</Link>
                 <Link href="/presupuesto" onClick={closeMenu}>Presupuesto</Link>
                 <Link href="/#contact" onClick={closeMenu}>Contacto</Link>

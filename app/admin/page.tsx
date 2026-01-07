@@ -35,9 +35,150 @@ export default function AdminPage() {
     const [adminNote, setAdminNote] = useState('');
     const [uploadingAdmin, setUploadingAdmin] = useState(false);
 
-    // Budget
-    const [showBudgetForm, setShowBudgetForm] = useState(false);
-    const [budgetItems, setBudgetItems] = useState<{ desc: string; price: number }[]>([{ desc: '', price: 0 }]);
+    // New Client State
+    const [showNewClientModal, setShowNewClientModal] = useState(false);
+    const [newClientData, setNewClientData] = useState({
+        name: '',
+        phone: '',
+        email: '',
+        make_model: '',
+        year: '',
+        damage_type: 'Granizo',
+        damage_location: [] as string[],
+        description: ''
+    });
+    const [savingClient, setSavingClient] = useState(false);
+
+    // Budget State using a dedicated object for the larger modal
+    // Budget State
+    const [showBudgetModal, setShowBudgetModal] = useState(false);
+    const [budgetData, setBudgetData] = useState({
+        date: '',
+        validity: 30, // Default 30 days as per request
+        clientName: '',
+        clientPhone: '',
+        clientEmail: '',
+        vehicle: '',
+        // Updated items schema to match the photo: Zona, Golpes, Tamaño, Complejidad, Precio (Observaciones)
+        items: [] as {
+            zone: string;
+            dents: string;
+            size: string;
+            complexity: string;
+            price: number;
+            observations: string;
+        }[],
+        notes: '',
+        paymentTerms: 'Efectivo, Transferencia o Mercado Pago.',
+        isCombo: false
+    });
+
+    const openBudgetModal = (req: Request) => {
+        // Fixed rows as requested
+        const fixedZones = [
+            "Capó",
+            "Techo",
+            "Guardabarros del. der.",
+            "Guardabarros del. izq.",
+            "Puerta del. der.",
+            "Puerta del. izq.",
+            "Puerta tras. der.",
+            "Puerta tras. izq.",
+            "Parante techo der.",
+            "Parante techo izq.",
+            "Paragolpes delantero",
+            "Paragolpes trasero",
+            "Tapa de baúl"
+        ];
+
+        // Map fixed zones to items. 
+        // If the request has damage info (which is just strings currently), we could try to pre-fill "dents" or so,
+        // but for now, we just initialize the rows.
+        // We will TRY to match if we can, but simpler is just to list them all blank.
+
+        const initialItems = fixedZones.map(zone => ({
+            zone: zone,
+            dents: '',
+            size: '',
+            complexity: '',
+            price: 0,
+            observations: ''
+        }));
+
+        setBudgetData({
+            date: new Date().toISOString().split('T')[0],
+            validity: 30,
+            clientName: req.name || '',
+            clientPhone: req.phone || '',
+            clientEmail: req.email || '',
+            vehicle: `${req.make_model} ${req.year}`,
+            items: initialItems,
+            notes: req.description ? `Nota cliente: ${req.description}` : '',
+            paymentTerms: 'Efectivo, Transferencia o Mercado Pago.',
+            isCombo: false
+        });
+
+        setShowBudgetModal(true);
+    };
+
+    const handleNewClientChange = (field: string, value: any) => {
+        setNewClientData({ ...newClientData, [field]: value });
+    };
+
+    const handleCreateClient = async () => {
+        if (!newClientData.name || !newClientData.phone) {
+            alert('Nombre y Teléfono son obligatorios');
+            return;
+        }
+
+        setSavingClient(true);
+        try {
+            const { data, error } = await supabase
+                .from('requests')
+                .insert([
+                    {
+                        name: newClientData.name,
+                        phone: newClientData.phone,
+                        email: newClientData.email,
+                        make_model: newClientData.make_model,
+                        year: newClientData.year,
+                        damage_type: newClientData.damage_type,
+                        damage_location: newClientData.damage_location,
+                        description: newClientData.description,
+                        status: 'Pendiente', // Or 'Presupuesto'
+                        location: 'Cargado por Admin',
+                        photos: []
+                    }
+                ])
+                .select();
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                const newReq = data[0];
+                setRequests([newReq, ...requests]);
+                alert('Cliente creado exitosamente');
+                setShowNewClientModal(false);
+                setNewClientData({
+                    name: '',
+                    phone: '',
+                    email: '',
+                    make_model: '',
+                    year: '',
+                    damage_type: 'Granizo',
+                    damage_location: [],
+                    description: ''
+                });
+                // Optionally open detail straight away
+                handleOpenDetail(newReq);
+            }
+        } catch (error) {
+            console.error('Error creating client:', error);
+            alert('Error al crear cliente');
+        } finally {
+            setSavingClient(false);
+        }
+    };
 
     // Search & Filter
     const [searchTerm, setSearchTerm] = useState('');
@@ -137,8 +278,7 @@ export default function AdminPage() {
     const handleOpenDetail = (req: Request) => {
         setSelectedRequest(req);
         setAdminNote(req.admin_notes || '');
-        setShowBudgetForm(false);
-        setBudgetItems([{ desc: '', price: 0 }]);
+        setShowBudgetModal(false);
     };
 
     const handleSaveAdminNote = async () => {
@@ -205,18 +345,28 @@ export default function AdminPage() {
     };
 
     // Budget Functions
-    const handleAddBudgetItem = () => {
-        setBudgetItems([...budgetItems, { desc: '', price: 0 }]);
+    // Budget Helper Functions
+    const handleBudgetChange = (field: string, value: any) => {
+        setBudgetData({ ...budgetData, [field]: value });
     };
 
-    const handleBudgetItemChange = (index: number, field: 'desc' | 'price', value: string | number) => {
-        const newItems = [...budgetItems];
+    const handleItemChange = (index: number, field: string, value: any) => {
+        const newItems = [...budgetData.items];
         newItems[index] = { ...newItems[index], [field]: value };
-        setBudgetItems(newItems);
+        setBudgetData({ ...budgetData, items: newItems });
     };
 
-    const handleRemoveBudgetItem = (index: number) => {
-        setBudgetItems(budgetItems.filter((_, i) => i !== index));
+    const addItem = () => {
+        setBudgetData({ ...budgetData, items: [...budgetData.items, { zone: '', dents: '', size: '', complexity: '', price: 0, observations: '' }] });
+    };
+
+    const removeItem = (index: number) => {
+        setBudgetData({ ...budgetData, items: budgetData.items.filter((_, i) => i !== index) });
+    };
+
+    const calculateTotal = () => {
+        const subtotal = budgetData.items.reduce((sum, item) => sum + Number(item.price), 0);
+        return budgetData.isCombo ? subtotal * 0.8 : subtotal;
     };
 
     const generatePDF = async () => {
@@ -225,82 +375,204 @@ export default function AdminPage() {
         const doc = new jsPDF();
 
         // --- Header ---
-        doc.setFillColor(20, 20, 20); // Dark background header
+        doc.setFillColor(20, 20, 20); // Dark header
         doc.rect(0, 0, 210, 40, 'F');
 
-        // Add Logo
+        // Logo & Watermark
         try {
-            const response = await fetch('/assets/icon.jpg');
+            const response = await fetch('/assets/logoHeader.png');
             const blob = await response.blob();
             const base64 = await new Promise<string>((resolve) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result as string);
                 reader.readAsDataURL(blob);
             });
-            // Add circular clipping if desired, but standard square/rect for now
-            doc.addImage(base64, 'JPEG', 10, 5, 30, 30);
+
+            // Header Logo
+            doc.addImage(base64, 'PNG', 15, 5, 30, 30); // Adjusted for new logo
+
+            // Watermark
+            // To make it subtle, we can't easily change opacity in standard jsPDF without GState or plugins safely in this env.
+            // But we can place it behind text.
+            // If the image itself isn't pre-faded, it might be strong. 
+            // We will try to add it centered.
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const imgWidth = 100;
+            const imgHeight = 100;
+            const x = (pageWidth - imgWidth) / 2;
+            const y = (pageHeight - imgHeight) / 2;
+
+            // Verify if GState is available in this version of jsPDF, otherwise just add it.
+            // Assuming we can't rely on advanced features, we just add it first? 
+            // Actually, adding it first implies z-index? No, PDF paints in order.
+            // So we should have added it BEFORE the header rect if we wanted it behind everything, 
+            // but the header rect is opaque.
+            // We want it behind the table transparency?
+            // Let's add it right after the header, but before text.
+
+            // Note: If the user wants it "sutil" (subtle), and we can't control opacity, 
+            // it relies on the image being subtle. If not, it might make text hard to read.
+            // I'll add it here.
+
+            // Attempting GSstate for transparency if supported
+            try {
+                // @ts-ignore
+                doc.setGState(new doc.GState({ opacity: 0.1 }));
+                doc.addImage(base64, 'PNG', x, y, imgWidth, imgHeight);
+                // @ts-ignore
+                doc.setGState(new doc.GState({ opacity: 1.0 }));
+            } catch (e) {
+                // Fallback if GState fails, just add it (might be strong)
+                // or skip if risky
+                doc.addImage(base64, 'PNG', x, y, imgWidth, imgHeight);
+            }
+
         } catch (err) {
             console.error("Error loading logo:", err);
         }
 
-        doc.setTextColor(212, 175, 55); // Gold color
+        doc.setTextColor(212, 175, 55);
         doc.setFontSize(22);
-        doc.text("DSP-MDS", 50, 20);
+        doc.setFont("helvetica", "bold");
+        doc.text("DSP-MDS", 55, 20);
 
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(12);
-        doc.text("Técnico Sacabollos - Desabollado Sin Pintura", 50, 28);
+        doc.setFont("helvetica", "normal");
+        doc.text("Técnico Sacabollos - Desabollado Sin Pintura", 55, 28);
 
-        doc.setFontSize(10);
-        doc.text("Calle 461 B entre 21 y 21 A, City Bell", 140, 15);
-        doc.text("Tel: 221 522 2729", 140, 20);
-        doc.text("Instagram: @dspmds.arg", 140, 25);
+        doc.setFontSize(9);
+        doc.text("Calle 461 B entre 21 y 21 A, City Bell", 200, 15, { align: 'right' });
+        doc.text("Tel: 221 522 2729", 200, 20, { align: 'right' });
+        doc.text("Instagram: @dspmds.arg", 200, 25, { align: 'right' });
 
-        // --- Client Info ---
+        // --- Info Section ---
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(14);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
         doc.text("PRESUPUESTO", 15, 55);
 
         doc.setFontSize(10);
-        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 55);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Fecha: ${new Date(budgetData.date).toLocaleDateString()}`, 150, 55);
 
+        // Separator
         doc.setDrawColor(200);
-        doc.line(15, 58, 195, 58);
+        doc.line(15, 60, 195, 60);
 
+        // Client Info
         doc.setFontSize(11);
-        doc.text(`Cliente: ${selectedRequest.name}`, 15, 70);
-        doc.text(`Vehículo: ${selectedRequest.make_model} (${selectedRequest.year})`, 15, 77);
-        doc.text(`Email: ${selectedRequest.email}`, 15, 84);
+        doc.text("Información del Cliente:", 15, 70);
+        doc.setFont("helvetica", "bold");
+        doc.text(budgetData.clientName, 15, 77);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Vehículo: ${budgetData.vehicle}`, 15, 84);
+        doc.text(`Tel: ${budgetData.clientPhone}`, 15, 91);
+        doc.text(`Email: ${budgetData.clientEmail}`, 100, 91);
 
         // --- Table ---
-        const tableBody = budgetItems.map(item => [item.desc, `$${item.price}`]);
-        const total = budgetItems.reduce((sum, item) => sum + Number(item.price), 0);
-        tableBody.push(['TOTAL', `$${total}`]);
+        // --- Table ---
+        // Filter out empty items (where dents/size/complexity are empty OR price is 0, depending on preference. Usually if price > 0 or has description it should be included)
+        // Adjust logic: Keep if it has dents OR price > 0.
+        const validItems = budgetData.items.filter(item =>
+            (item.dents && item.dents.trim() !== '') ||
+            item.price > 0 ||
+            (item.observations && item.observations.trim() !== '')
+        );
+
+        const tableBody = validItems.map(item => {
+            const obsv = item.observations ? `\n${item.observations}` : '';
+            return [
+                item.zone,
+                item.dents,
+                item.size,
+                item.complexity,
+                (item.price > 0 ? `$${Number(item.price).toLocaleString()}` : '') + obsv
+            ];
+        });
+
+        const subtotal = validItems.reduce((sum, item) => sum + Number(item.price), 0);
+
+        if (budgetData.isCombo) {
+            tableBody.push(['', '', '', 'Subtotal', `$${subtotal.toLocaleString()}`]);
+            tableBody.push(['', '', '', 'Descuento Combo (20%)', `-$${(subtotal * 0.2).toLocaleString()}`]);
+            tableBody.push(['', '', '', 'TOTAL CONCEPTO SEGURO', `$${(subtotal * 0.8).toLocaleString()}`]);
+        } else {
+            tableBody.push(['', '', '', 'TOTAL', `$${subtotal.toLocaleString()}`]);
+        }
 
         autoTable(doc, {
-            startY: 95,
-            head: [['Descripción del Trabajo', 'Precio']],
+            startY: 105,
+            head: [['Zona / Autoparte', 'Golpes', 'Tamaño', 'Complejidad', 'Observaciones / Costo']],
             body: tableBody,
             headStyles: { fillColor: [20, 20, 20], textColor: [212, 175, 55] },
             footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
             theme: 'grid',
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: {
+                0: { cellWidth: 50 }, // Zona
+                1: { cellWidth: 20 }, // Golpes
+                2: { cellWidth: 25 }, // Tamaño
+                3: { cellWidth: 25 }, // Complejidad
+                4: { cellWidth: 'auto', halign: 'right' }  // Costo
+            }
         });
 
-        // --- Footer ---
-        const finalY = (doc as any).lastAutoTable.finalY + 20;
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        doc.text("Presupuesto válido por 15 días.", 15, finalY);
-        doc.text("Gracias por confiar en DSP-MDS.", 15, finalY + 5);
+        // --- Footer Logic (Pagination Safe) ---
+        let finalY = (doc as any).lastAutoTable.finalY + 15;
+        const pageHeight = doc.internal.pageSize.height;
+        const footerHeightApprox = 100; // Estimate space needed for notes, terms, signature.
 
-        // Save PDF
+        if (finalY + footerHeightApprox > pageHeight) {
+            doc.addPage();
+            finalY = 20; // Reset Y on new page
+        }
+
+        // Notes
+        if (budgetData.notes) {
+            doc.setFontSize(10);
+            doc.setTextColor(50);
+            doc.setFont("helvetica", "bold");
+            doc.text("Observaciones Generales:", 15, finalY);
+            doc.setFont("helvetica", "normal");
+            const splitNotes = doc.splitTextToSize(budgetData.notes, 180);
+            doc.text(splitNotes, 15, finalY + 6);
+            finalY += 10 + (splitNotes.length * 5);
+        }
+
+        // Terms
+        doc.setFontSize(8);
+        doc.setTextColor(80);
+        doc.setFont("helvetica", "bold");
+        doc.text("Términos y Condiciones (síntesis)", 15, finalY);
+        finalY += 5;
+        doc.setFont("helvetica", "normal");
+
+        const termsText = "El vehículo deberá entregarse limpio. El cliente acepta los métodos y técnicas de desabollado sin pintura y los riesgos naturales e inherentes al proceso. En casos poco probables en los que, durante tareas de desarme o desmontaje necesarias para la correcta reparación, pudiera dañarse algún accesorio, MDS asumirá su reposición sin costo adicional para el cliente. En vehículos con pintura repintada existe un mayor riesgo de desprendimiento o daño. En pintura original, la probabilidad de daño es muy baja (aprox. 1 en 100), aunque no nula. Si al iniciar la intervención se detectaran condiciones no visibles durante la inspección inicial, el cliente será informado antes de continuar el trabajo.";
+        const splitTerms = doc.splitTextToSize(termsText, 180);
+        doc.text(splitTerms, 15, finalY);
+
+        finalY += (splitTerms.length * 4) + 10;
+
+        // Validity & Signature
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Vigencia: ${budgetData.validity} días`, 15, finalY);
+
+        doc.text("Firma del Técnico (MDS): MATÍAS DA SILVA", 120, finalY);
+        doc.line(120, finalY - 5, 200, finalY - 5);
+
+        // Save
         const pdfBlob = doc.output('blob');
-        const pdfFileName = `Presupuesto_${selectedRequest.name.replace(/\s+/g, '_')}.pdf`;
+        const pdfFileName = `Presupuesto_${budgetData.clientName.replace(/\s+/g, '_')}.pdf`;
         doc.save(pdfFileName);
 
-        // Upload to Supabase automatically
+        // Upload
         try {
-            const fileName = `budget_${Date.now()}.pdf`;
+            setUploadingAdmin(true);
+            const fileName = `budget_${budgetData.clientName.replace(/\s+/g, '')}_${Date.now()}.pdf`;
             const { error: uploadError } = await supabase.storage
                 .from('presupuestos')
                 .upload(fileName, pdfBlob);
@@ -315,18 +587,21 @@ export default function AdminPage() {
 
                 await supabase
                     .from('requests')
-                    .update({ admin_attachments: newAttachments })
+                    .update({ admin_attachments: newAttachments, status: 'Presupuesto Enviado' })
                     .eq('id', selectedRequest.id);
 
-                // Update local state
-                setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, admin_attachments: newAttachments } : r));
-                setSelectedRequest({ ...selectedRequest, admin_attachments: newAttachments });
-                alert('Presupuesto generado y guardado en adjuntos.');
-                setShowBudgetForm(false);
+                setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, admin_attachments: newAttachments, status: 'Presupuesto Enviado' } : r));
+                setSelectedRequest({ ...selectedRequest, admin_attachments: newAttachments, status: 'Presupuesto Enviado' });
+                alert('Presupuesto generado correctamente.');
+                setShowBudgetModal(false);
+            } else {
+                throw uploadError;
             }
         } catch (e) {
             console.error(e);
-            alert('Presupuesto descargado, pero error al guardar online.');
+            alert('Error al subir el presupuesto a la nube.');
+        } finally {
+            setUploadingAdmin(false);
         }
     };
 
@@ -375,12 +650,17 @@ export default function AdminPage() {
             <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
                 <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
                     <h1 style={{ color: '#D4AF37' }}>Panel de Solicitudes</h1>
-                    <button onClick={() => {
-                        setIsAuthenticated(false);
-                        localStorage.removeItem('admin_session');
-                    }} style={{ padding: '0.5rem 1rem', background: '#333', border: 'none', color: '#fff', borderRadius: '5px', cursor: 'pointer' }}>
-                        Cerrar Sesión
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button onClick={() => setShowNewClientModal(true)} className="btn-gold" style={{ padding: '0.5rem 1rem' }}>
+                            <i className="fas fa-plus"></i> Nuevo Cliente
+                        </button>
+                        <button onClick={() => {
+                            setIsAuthenticated(false);
+                            localStorage.removeItem('admin_session');
+                        }} style={{ padding: '0.5rem 1rem', background: '#333', border: 'none', color: '#fff', borderRadius: '5px', cursor: 'pointer' }}>
+                            Cerrar Sesión
+                        </button>
+                    </div>
                 </header>
 
                 {/* Search & Filters */}
@@ -549,43 +829,12 @@ export default function AdminPage() {
                                 <div style={{ marginBottom: '20px' }}>
 
                                     <button
-                                        onClick={() => setShowBudgetForm(!showBudgetForm)}
+                                        onClick={() => openBudgetModal(selectedRequest)}
                                         className="btn-gold"
                                         style={{ width: '100%', marginBottom: '10px', background: '#222', border: '1px solid #D4AF37', padding: '10px', color: '#D4AF37' }}
                                     >
-                                        <i className="fas fa-file-invoice-dollar"></i> {showBudgetForm ? 'Cancelar Presupuesto' : 'Crear Presupuesto PDF'}
+                                        <i className="fas fa-file-invoice-dollar"></i> Generar Nuevo Presupuesto
                                     </button>
-
-                                    {showBudgetForm && (
-                                        <div style={{ background: '#333', padding: '15px', borderRadius: '5px', marginBottom: '15px', border: '1px solid #444' }}>
-                                            <h4 style={{ color: '#D4AF37', marginBottom: '10px', marginTop: 0 }}>Items del Presupuesto</h4>
-                                            {budgetItems.map((item, index) => (
-                                                <div key={index} style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Descripción"
-                                                        value={item.desc}
-                                                        onChange={(e) => handleBudgetItemChange(index, 'desc', e.target.value)}
-                                                        style={{ flex: 1, padding: '8px', borderRadius: '3px', border: 'none', background: '#222', color: '#fff' }}
-                                                    />
-                                                    <input
-                                                        type="number"
-                                                        placeholder="$$$"
-                                                        value={item.price}
-                                                        onChange={(e) => handleBudgetItemChange(index, 'price', e.target.value as any)}
-                                                        style={{ width: '80px', padding: '8px', borderRadius: '3px', border: 'none', background: '#222', color: '#fff' }}
-                                                    />
-                                                    <button onClick={() => handleRemoveBudgetItem(index)} style={{ color: '#ff5555', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
-                                                </div>
-                                            ))}
-                                            <button onClick={handleAddBudgetItem} style={{ color: '#ccc', background: 'none', border: 'none', fontSize: '0.9rem', textDecoration: 'underline', marginBottom: '15px', display: 'block', cursor: 'pointer' }}>
-                                                + Agregar Item
-                                            </button>
-                                            <button onClick={generatePDF} className="btn-gold" style={{ width: '100%' }}>
-                                                Generar y Guardar PDF
-                                            </button>
-                                        </div>
-                                    )}
 
                                     <hr style={{ borderColor: '#444', margin: '20px 0' }} />
 
@@ -649,6 +898,177 @@ export default function AdminPage() {
                 </div>
             )}
 
+            {/* Budget Generator Modal (New) */}
+            {showBudgetModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 3000,
+                    padding: '20px'
+                }}>
+                    <div style={{
+                        backgroundColor: '#151515',
+                        width: '1000px',
+                        maxWidth: '98%',
+                        height: '90vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        borderRadius: '10px',
+                        border: '1px solid #D4AF37',
+                        position: 'relative',
+                        boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+                    }}>
+                        {/* Modal Header */}
+                        <div style={{ padding: '20px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#000' }}>
+                            <h2 style={{ margin: 0, color: '#D4AF37' }}>Generador de Presupuesto</h2>
+                            <button onClick={() => setShowBudgetModal(false)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+                        </div>
+
+                        {/* Modal Content Scrollable */}
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+                                {/* Info General */}
+                                <div style={{ background: '#222', padding: '20px', borderRadius: '5px' }}>
+                                    <h3 style={{ color: '#fff', borderBottom: '1px solid #444', paddingBottom: '10px', marginBottom: '15px', fontSize: '1.1rem' }}>Datos del Presupuesto</h3>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', color: '#aaa', fontSize: '0.9rem', marginBottom: '5px' }}>Fecha</label>
+                                            <input
+                                                type="date"
+                                                value={budgetData.date}
+                                                onChange={(e) => handleBudgetChange('date', e.target.value)}
+                                                style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', color: '#aaa', fontSize: '0.9rem', marginBottom: '5px' }}>Validez (días)</label>
+                                            <input
+                                                type="number"
+                                                value={budgetData.validity}
+                                                onChange={(e) => handleBudgetChange('validity', e.target.value)}
+                                                style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <h3 style={{ color: '#fff', borderBottom: '1px solid #444', paddingBottom: '10px', marginBottom: '15px', fontSize: '1.1rem', marginTop: '20px' }}>Datos del Cliente (Editables)</h3>
+                                    <div style={{ display: 'grid', gap: '15px' }}>
+                                        <input type="text" placeholder="Nombre" value={budgetData.clientName} onChange={(e) => handleBudgetChange('clientName', e.target.value)} style={{ padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }} />
+                                        <input type="text" placeholder="Vehículo" value={budgetData.vehicle} onChange={(e) => handleBudgetChange('vehicle', e.target.value)} style={{ padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }} />
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                            <input type="text" placeholder="Teléfono" value={budgetData.clientPhone} onChange={(e) => handleBudgetChange('clientPhone', e.target.value)} style={{ padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }} />
+                                            <input type="email" placeholder="Email" value={budgetData.clientEmail} onChange={(e) => handleBudgetChange('clientEmail', e.target.value)} style={{ padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Items */}
+                                <div style={{ background: '#222', padding: '20px', borderRadius: '5px', display: 'flex', flexDirection: 'column' }}>
+                                    <h3 style={{ color: '#fff', borderBottom: '1px solid #444', paddingBottom: '10px', marginBottom: '15px', fontSize: '1.1rem' }}>Planilla de Presupuestación</h3>
+                                    <div style={{ flex: 1, overflowY: 'auto', maxHeight: '400px', fontSize: '0.9rem' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 20px', gap: '5px', paddingBottom: '10px', borderBottom: '1px solid #333', marginBottom: '10px', fontWeight: 'bold', color: '#888' }}>
+                                            <div>Zona</div>
+                                            <div>Golpes</div>
+                                            <div>Tamaño</div>
+                                            <div>Comp.</div>
+                                            <div style={{ textAlign: 'right' }}>$$$ / Obs</div>
+                                            <div></div>
+                                        </div>
+                                        {budgetData.items.map((item, i) => (
+                                            <div key={i} style={{ marginBottom: '10px', background: '#252525', padding: '5px', borderRadius: '5px' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 20px', gap: '5px', alignItems: 'center' }}>
+                                                    <div>
+                                                        <input type="text" placeholder="Zona" value={item.zone} onChange={(e) => handleItemChange(i, 'zone', e.target.value)} style={{ width: '100%', padding: '6px', background: '#333', border: '1px solid #444', color: '#fff', borderRadius: '3px' }} />
+                                                    </div>
+                                                    <div>
+                                                        <input type="text" placeholder="Cant" value={item.dents} onChange={(e) => handleItemChange(i, 'dents', e.target.value)} style={{ width: '100%', padding: '6px', background: '#333', border: 'none', color: '#fff', borderRadius: '3px' }} />
+                                                    </div>
+                                                    <div>
+                                                        <select value={item.size} onChange={(e) => handleItemChange(i, 'size', e.target.value)} style={{ width: '100%', padding: '6px', background: '#333', border: 'none', color: '#fff', borderRadius: '3px', fontSize: '0.8rem' }}>
+                                                            <option value="">-</option>
+                                                            <option value="Leve">Leve</option>
+                                                            <option value="Medio">Medio</option>
+                                                            <option value="Grave">Grave</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <select value={item.complexity} onChange={(e) => handleItemChange(i, 'complexity', e.target.value)} style={{ width: '100%', padding: '6px', background: '#333', border: 'none', color: '#fff', borderRadius: '3px', fontSize: '0.8rem' }}>
+                                                            <option value="">-</option>
+                                                            <option value="Baja">Baja</option>
+                                                            <option value="Media">Media</option>
+                                                            <option value="Alta">Alta</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <input type="number" placeholder="$" value={item.price} onChange={(e) => handleItemChange(i, 'price', e.target.value)} style={{ width: '100%', padding: '6px', background: '#333', border: 'none', color: '#fff', borderRadius: '3px', textAlign: 'right' }} />
+                                                    </div>
+                                                    <button onClick={() => removeItem(i)} style={{ background: 'none', border: 'none', color: '#ff5555', cursor: 'pointer', textAlign: 'center' }}>&times;</button>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Observaciones adicionales para este item..."
+                                                    value={item.observations || ''}
+                                                    onChange={(e) => handleItemChange(i, 'observations', e.target.value)}
+                                                    style={{ width: '100%', marginTop: '5px', padding: '5px', background: '#222', border: '1px solid #444', color: '#aaa', borderRadius: '3px', fontSize: '0.85rem' }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button onClick={addItem} style={{ alignSelf: 'start', marginTop: '10px', background: 'none', border: 'none', color: '#D4AF37', cursor: 'pointer', textDecoration: 'underline' }}>+ Agregar Fila Libre</button>
+
+                                    <div style={{ borderTop: '1px solid #444', marginTop: '20px', paddingTop: '15px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={budgetData.isCombo}
+                                                onChange={(e) => handleBudgetChange('isCombo', e.target.checked)}
+                                                style={{ cursor: 'pointer', width: '20px', height: '20px' }}
+                                            />
+                                            <label style={{ color: '#D4AF37', fontSize: '1rem', cursor: 'pointer' }} onClick={() => handleBudgetChange('isCombo', !budgetData.isCombo)}>Aplicar Descuento "Combo de Bollos" (20%)</label>
+                                        </div>
+                                        <div style={{ fontSize: '1.2rem', color: '#fff' }}>
+                                            Total: <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>${calculateTotal().toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer Info */}
+                            <div style={{ background: '#222', padding: '20px', borderRadius: '5px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', color: '#aaa', fontSize: '0.9rem', marginBottom: '5px' }}>Observaciones / Notas</label>
+                                        <textarea value={budgetData.notes} onChange={(e) => handleBudgetChange('notes', e.target.value)} style={{ width: '100%', height: '80px', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }}></textarea>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', color: '#aaa', fontSize: '0.9rem', marginBottom: '5px' }}>Condiciones de Pago</label>
+                                        <textarea value={budgetData.paymentTerms} onChange={(e) => handleBudgetChange('paymentTerms', e.target.value)} style={{ width: '100%', height: '80px', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }}></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {/* Modal Footer Actions */}
+                        <div style={{ padding: '20px', borderTop: '1px solid #333', display: 'flex', justifyContent: 'flex-end', gap: '15px', backgroundColor: '#000' }}>
+                            <button onClick={() => setShowBudgetModal(false)} style={{ padding: '10px 20px', background: '#333', border: 'none', color: '#fff', borderRadius: '5px', cursor: 'pointer' }}>
+                                Cancelar
+                            </button>
+                            <button onClick={generatePDF} className="btn-gold" style={{ padding: '10px 30px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <i className="fas fa-file-pdf"></i> Generar PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Photo Modal */}
             {selectedPhoto && (
                 <div style={{
@@ -686,6 +1106,78 @@ export default function AdminPage() {
                             style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: '5px' }}
                             onClick={(e) => e.stopPropagation()}
                         />
+                    </div>
+                </div>
+            )}
+            {/* New Client Modal */}
+            {showNewClientModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000
+                }}>
+                    <div style={{
+                        backgroundColor: '#1a1a1a', width: '600px', maxWidth: '95%',
+                        borderRadius: '10px', border: '1px solid #D4AF37', padding: '20px', position: 'relative'
+                    }}>
+                        <h2 style={{ color: '#D4AF37', marginBottom: '20px' }}>Nuevo Cliente / Presupuesto</h2>
+                        <div style={{ display: 'grid', gap: '15px' }}>
+                            <input
+                                type="text" placeholder="Nombre Completo *"
+                                value={newClientData.name}
+                                onChange={(e) => handleNewClientChange('name', e.target.value)}
+                                style={{ padding: '10px', background: '#222', border: '1px solid #444', color: '#fff', borderRadius: '5px' }}
+                            />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <input
+                                    type="text" placeholder="Teléfono *"
+                                    value={newClientData.phone}
+                                    onChange={(e) => handleNewClientChange('phone', e.target.value)}
+                                    style={{ padding: '10px', background: '#222', border: '1px solid #444', color: '#fff', borderRadius: '5px' }}
+                                />
+                                <input
+                                    type="email" placeholder="Email (Opcional)"
+                                    value={newClientData.email}
+                                    onChange={(e) => handleNewClientChange('email', e.target.value)}
+                                    style={{ padding: '10px', background: '#222', border: '1px solid #444', color: '#fff', borderRadius: '5px' }}
+                                />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <input
+                                    type="text" placeholder="Vehículo (Marca/Modelo)"
+                                    value={newClientData.make_model}
+                                    onChange={(e) => handleNewClientChange('make_model', e.target.value)}
+                                    style={{ padding: '10px', background: '#222', border: '1px solid #444', color: '#fff', borderRadius: '5px' }}
+                                />
+                                <input
+                                    type="text" placeholder="Año"
+                                    value={newClientData.year}
+                                    onChange={(e) => handleNewClientChange('year', e.target.value)}
+                                    style={{ padding: '10px', background: '#222', border: '1px solid #444', color: '#fff', borderRadius: '5px' }}
+                                />
+                            </div>
+                            <textarea
+                                placeholder="Notas internas / Descripción del daño"
+                                value={newClientData.description}
+                                onChange={(e) => handleNewClientChange('description', e.target.value)}
+                                style={{ padding: '10px', background: '#222', border: '1px solid #444', color: '#fff', borderRadius: '5px', height: '80px' }}
+                            />
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                <button
+                                    onClick={() => setShowNewClientModal(false)}
+                                    style={{ flex: 1, padding: '10px', background: '#333', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleCreateClient}
+                                    disabled={savingClient}
+                                    className="btn-gold"
+                                    style={{ flex: 1, padding: '10px', cursor: 'pointer' }}
+                                >
+                                    {savingClient ? 'Guardando...' : 'Crear y Gestionar'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

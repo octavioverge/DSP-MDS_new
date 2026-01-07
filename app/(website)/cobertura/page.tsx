@@ -142,14 +142,7 @@ export default function CoberturaPage() {
                         <p className="text-muted small">
                             Este documento tiene carácter informativo y fue desarrollado para explicar el enfoque, alcance y funcionamiento del sistema. La contratación del servicio se rige por condiciones específicas que se detallan en los documentos de prestación correspondientes.
                         </p>
-                        <p className="mt-4 text-white font-bold">
-                            Para suscribirse a los planes de cobertura haga click en los botones correspondientes a cada plan arriba o en los siguientes links:
-                        </p>
-                        <div className="mt-4 flex justify-center gap-4 flex-wrap">
-                            <Link href="#" className="btn-gold-outline mx-2">PLAN BASE</Link>
-                            <Link href="#" className="btn-gold-outline mx-2">PLAN INTERMEDIO</Link>
-                            <Link href="#" className="btn-gold-outline mx-2">PLAN PREMIUM</Link>
-                        </div>
+
                     </div>
 
                 </div>

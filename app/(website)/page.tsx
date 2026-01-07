@@ -1,5 +1,6 @@
 import ScrollAnimations from '@/app/components/ScrollAnimations';
 import Link from 'next/link';
+import ReviewsCarousel from '@/app/components/ReviewsCarousel';
 
 export default function Home() {
   return (
@@ -99,37 +100,34 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Gallery Section */}
-      <section id="gallery" className="gallery section-padding">
+      {/* Reviews Section */}
+      <section id="reviews" className="reviews section-padding" style={{ backgroundColor: '#111' }}>
         <div className="container">
           <div className="text-center mb-5 fade-in-up">
-            <h2 className="section-title">Nuestros <span className="text-gold">Trabajos</span></h2>
+            <h2 className="section-title">Opiniones de <span className="text-gold">Clientes</span></h2>
             <div className="gold-line mx-auto"></div>
-            <p>Resultados impecables en todo tipo de vehículos.</p>
-          </div>
-          <div className="gallery-grid">
-            {/* Placeholder 1: Image */}
-            <div className="gallery-item fade-in-up delay-100">
-              <img src="https://images.unsplash.com/photo-1625047509168-a7026f36de04?q=80&w=800&auto=format&fit=crop"
-                alt="Reparación de abolladura" />
-            </div>
-            {/* Placeholder 2: Video */}
-            <div className="gallery-item fade-in-up delay-200">
-              {/* Using an image that LOOKS like a video thumb */}
-              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                <img src="https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=800&auto=format&fit=crop"
-                  alt="Video de reparación" />
-                <div
-                  style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff', fontSize: '3rem', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <i className="fas fa-play"></i>
-                </div>
+            <p className="mb-4">Lo que dicen quienes ya confiaron en nosotros.</p>
+
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginBottom: '30px' }}>
+              <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#fff' }}>5.0</span>
+              <div style={{ color: '#D4AF37' }}>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
               </div>
+              <span style={{ color: '#888' }}>en Google Maps</span>
             </div>
-            {/* Placeholder 3: Image */}
-            <div className="gallery-item fade-in-up delay-100">
-              <img src="https://images.unsplash.com/photo-1507136566006-cfc505b114fc?q=80&w=800&auto=format&fit=crop"
-                alt="Detalle de reparación" />
-            </div>
+          </div>
+
+          <ReviewsCarousel />
+
+
+          <div className="text-center">
+            <a href="https://maps.app.goo.gl/xEx31qHu9ckUGTpB8" target="_blank" rel="noopener noreferrer" className="btn-gold">
+              <i className="fab fa-google" style={{ marginRight: '8px' }}></i> Ver todas las reseñas en Google Maps
+            </a>
           </div>
         </div>
       </section>

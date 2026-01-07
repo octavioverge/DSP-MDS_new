@@ -177,9 +177,8 @@ img {
 }
 
 .logo img {
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid var(--primary-gold);
+  /* Height controlled inline or by container */
+  object-fit: contain;
 }
 
 .nav-links {
@@ -374,16 +373,20 @@ img {
   border: 5px solid var(--primary-gold);
   padding: 15px;
   position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .image-frame::after {
   content: '';
   position: absolute;
-  top: 20px;
-  left: 20px;
-  width: 100%;
-  height: 100%;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% + 30px);
+  height: calc(100% + 30px);
+  border: 1px solid rgba(212, 175, 55, 0.5);
   z-index: -1;
 }
 
