@@ -16,6 +16,7 @@
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^5.0.2",
     "next": "16.1.1",
+    "nodemailer": "^7.0.12",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "three": "^0.182.0"
@@ -24,6 +25,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/jspdf": "^2.0.0",
     "@types/node": "^20",
+    "@types/nodemailer": "^7.0.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

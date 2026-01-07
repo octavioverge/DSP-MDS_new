@@ -108,7 +108,7 @@ export default function Navbar() {
                 <Link href="/#certificates" onClick={(e) => handleScroll(e, 'certificates')}>Certificaciones</Link>
                 <Link href="/cobertura" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>COBERTURA</Link>
                 <Link href="/formacion" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>FORMACIÓN</Link>
-                <Link href="/presupuesto" onClick={closeMenu}>Presupuesto</Link>
+                <Link href="/presupuesto" onClick={closeMenu} style={{ backgroundColor: '#D4AF37', color: '#121212', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px', fontWeight: 'bold' }}>PRESUPUESTO</Link>
             </div>
         </>
     );

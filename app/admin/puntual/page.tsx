@@ -455,13 +455,13 @@ export default function AdminPuntualPage() {
         );
 
         const tableBody = validItems.map(item => {
-            const obsv = item.observations ? `\n${item.observations}` : '';
             return [
                 item.zone,
                 item.dents,
                 item.size,
                 item.complexity,
-                (Number(item.price) > 0 ? `$${Number(item.price).toLocaleString()}` : '') + obsv
+                item.observations,
+                Number(item.price) > 0 ? `$${Number(item.price).toLocaleString()}` : ''
             ];
         });
 
@@ -469,25 +469,26 @@ export default function AdminPuntualPage() {
         // We only add the subtotal/total row in the table if there is NO combo, or just the subtotal.
         // User requested special text for combo outside the table.
         if (!budgetData.isCombo) {
-            tableBody.push(['', '', '', 'TOTAL', `$${subtotal.toLocaleString()}`]);
+            tableBody.push(['', '', '', '', 'TOTAL', `$${subtotal.toLocaleString()}`]);
         } else {
-            tableBody.push(['', '', '', 'Subtotal', `$${subtotal.toLocaleString()}`]);
+            tableBody.push(['', '', '', '', 'Subtotal', `$${subtotal.toLocaleString()}`]);
         }
 
         autoTable(doc, {
             startY: 105,
-            head: [['Zona / Autoparte', 'Golpes', 'Tamaño', 'Complejidad', 'Observaciones / Costo']],
+            head: [['Zona / Autoparte', 'Golpes', 'Tamaño', 'Complejidad', 'Observaciones', 'Costo']],
             body: tableBody,
             headStyles: { fillColor: [20, 20, 20], textColor: [212, 175, 55] },
             footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
             theme: 'grid',
             styles: { fontSize: 9, cellPadding: 3 },
             columnStyles: {
-                0: { cellWidth: 50 },
-                1: { cellWidth: 20 },
-                2: { cellWidth: 25 },
-                3: { cellWidth: 25 },
-                4: { cellWidth: 'auto', halign: 'right' }
+                0: { cellWidth: 40 },
+                1: { cellWidth: 15 },
+                2: { cellWidth: 20 },
+                3: { cellWidth: 20 },
+                4: { cellWidth: 'auto' }, // Observaciones takes remaining space
+                5: { cellWidth: 30, halign: 'right' }
             }
         } as any);
 
