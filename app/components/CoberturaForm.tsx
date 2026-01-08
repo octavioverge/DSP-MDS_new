@@ -90,7 +90,8 @@ export default function CoberturaForm({ preSelectedPlan }: Props) {
 
             // Manage Client
             let clientId: string | null = null;
-            const { data: existingClient } = await supabase.from('clients').select('id').eq('email', formData.email).maybeSingle();
+            const { data: existingClients } = await supabase.from('clients').select('id').eq('email', formData.email).limit(1);
+            const existingClient = existingClients && existingClients.length > 0 ? existingClients[0] : null;
 
             if (existingClient) {
                 clientId = existingClient.id;
@@ -123,6 +124,44 @@ export default function CoberturaForm({ preSelectedPlan }: Props) {
             if (reqError) throw reqError;
 
             setUploadProgress(100);
+
+            // Enviar notificación por email
+            try {
+                const emailHtml = `
+                    <div style="font-family: Arial, sans-serif; color: #333;">
+                        <h2 style="color: #D4AF37;">Nueva Solicitud de Cobertura</h2>
+                        <p><strong>Cliente:</strong> ${formData.name}</p>
+                        <p><strong>Email:</strong> ${formData.email}</p>
+                        <p><strong>Teléfono:</strong> <a href="tel:${formData.phone}">${formData.phone}</a></p>
+                        <p><strong>Localidad:</strong> ${formData.location}</p>
+                        <hr style="border: 1px solid #eee;" />
+                        <h3>Detalles del Vehículo</h3>
+                        <p><strong>Vehículo:</strong> ${formData.make} ${formData.model} (${year})</p>
+                        <p><strong>Pintura Original:</strong> ${formData.originalPaint}</p>
+                        <p><strong>Daños Visibles:</strong> ${formData.visibleDamage}</p>
+                        <hr style="border: 1px solid #eee;" />
+                        <h3>Plan y Seguro</h3>
+                        <p><strong>Plan Solicitado:</strong> ${formData.plan}</p>
+                        <p><strong>Franquicia:</strong> $${franchise}</p>
+                        <p><strong>Compañía:</strong> ${formData.insuranceCompany || 'No especificada'}</p>
+                        <hr style="border: 1px solid #eee;" />
+                        <p><strong>Resultado Pre-calificación:</strong> ${preStatus}</p>
+                        ${uploadedPhotoUrls.length > 0 ? `<h3>Fotos Adjuntas:</h3><ul>${uploadedPhotoUrls.map(url => `<li><a href="${url}">Ver foto</a></li>`).join('')}</ul>` : ''}
+                    </div>
+                `;
+
+                await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subject: `Nueva Solicitud de Cobertura - ${formData.name}`,
+                        html: emailHtml
+                    })
+                });
+            } catch (emailError) {
+                console.error('Error enviando email:', emailError);
+                // No bloqueamos el flujo si falla el email, pero lo logueamos
+            }
 
             if (messageType === 'success') {
                 setResultMessage({

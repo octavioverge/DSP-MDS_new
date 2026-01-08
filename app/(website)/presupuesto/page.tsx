@@ -92,13 +92,15 @@ export default function Presupuesto() {
             let clientId: string | null = null;
 
             // Check if client exists by email
-            const { data: existingClient, error: searchError } = await supabase
+            const { data: existingClients, error: searchError } = await supabase
                 .from('clients')
                 .select('id')
                 .eq('email', formData.email)
-                .maybeSingle(); // Returns null if not found, instead of error
+                .limit(1);
 
             if (searchError) throw searchError;
+
+            const existingClient = existingClients && existingClients.length > 0 ? existingClients[0] : null;
 
             if (existingClient) {
                 clientId = existingClient.id;
@@ -143,6 +145,40 @@ export default function Presupuesto() {
             }
 
             setUploadProgress(100);
+
+            // Enviar notificación por email
+            try {
+                const emailHtml = `
+                    <div style="font-family: Arial, sans-serif; color: #333;">
+                        <h2 style="color: #D4AF37;">Nueva Solicitud de Presupuesto</h2>
+                        <p><strong>Cliente:</strong> ${formData.name}</p>
+                        <p><strong>Email:</strong> ${formData.email}</p>
+                        <p><strong>Teléfono:</strong> <a href="tel:${formData.phone}">${formData.phone}</a></p>
+                        <p><strong>Localidad:</strong> ${formData.location}</p>
+                        <hr style="border: 1px solid #eee;" />
+                        <h3>Vehículo y Daño</h3>
+                        <p><strong>Vehículo:</strong> ${formData.makeModel} (${formData.year})</p>
+                        <p><strong>Patente:</strong> ${formData.licensePlate}</p>
+                        <p><strong>Tipo de Daño:</strong> ${formData.damageType}</p>
+                        <p><strong>Ubicación:</strong> ${formData.damageLocation.join(', ')}</p>
+                        <p><strong>Descripción:</strong> ${formData.description || 'Sin descripción adicional'}</p>
+                        <hr style="border: 1px solid #eee;" />
+                        ${uploadedPhotoUrls.length > 0 ? `<h3>Fotos Adjuntas:</h3><ul>${uploadedPhotoUrls.map(url => `<li><a href="${url}">Ver foto</a></li>`).join('')}</ul>` : ''}
+                    </div>
+                `;
+
+                await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subject: `Nueva Solicitud de Presupuesto - ${formData.name}`,
+                        html: emailHtml
+                    })
+                });
+            } catch (emailError) {
+                console.error('Error enviando email:', emailError);
+            }
+
             alert('¡Presupuesto enviado correctamente! Nos pondremos en contacto pronto.');
 
             // Reset form
