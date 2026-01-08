@@ -159,6 +159,7 @@ export default function AdminPuntualPage() {
             complexity: string;
             price: number | string;
             observations: string;
+            repairExpectation: string;
         }[],
         notes: '',
         paymentTerms: 'Efectivo, Transferencia o Mercado Pago.',
@@ -201,7 +202,8 @@ export default function AdminPuntualPage() {
             size: 'Leve',
             complexity: '',
             price: 0,
-            observations: ''
+            observations: '',
+            repairExpectation: 'Alta'
         }));
 
         setBudgetData({
@@ -564,7 +566,7 @@ export default function AdminPuntualPage() {
     };
 
     const addItem = () => {
-        setBudgetData({ ...budgetData, items: [...budgetData.items, { zone: '', dents: '', size: 'Leve', complexity: '', price: 0, observations: '' }] });
+        setBudgetData({ ...budgetData, items: [...budgetData.items, { zone: '', dents: '', size: 'Leve', complexity: '', price: 0, observations: '', repairExpectation: 'Alta' }] });
     };
 
     const removeItem = (index: number) => {
@@ -636,41 +638,75 @@ export default function AdminPuntualPage() {
             (item.observations && item.observations.trim() !== '')
         );
 
+        const expectationMap: any = {
+            'Buena': 'BAJA',
+            'Baja': 'BAJA',
+            'Media': 'MEDIA',
+            'Alta': 'ALTA'
+        };
+
+        const hasObservations = validItems.some(item => item.observations && item.observations.trim() !== '');
+
+        const tableHead = hasObservations
+            ? [['Zona / Autoparte', 'Golpes', 'Tamaño', 'Complejidad', 'Expectativa de reparación', 'Observaciones', 'Costo']]
+            : [['Zona / Autoparte', 'Golpes', 'Tamaño', 'Complejidad', 'Expectativa de reparación', 'Costo']];
+
         const tableBody = validItems.map(item => {
-            return [
+            const expKey = item.repairExpectation || 'Alta';
+            const expLabel = expectationMap[expKey] || expKey;
+
+            const row = [
                 item.zone,
                 item.dents,
                 item.size,
                 item.complexity,
-                item.observations,
-                Number(item.price) > 0 ? `$${Number(item.price).toLocaleString()}` : ''
+                expLabel,
             ];
+
+            if (hasObservations) {
+                row.push(item.observations || '');
+            }
+
+            row.push(Number(item.price) > 0 ? `$${Number(item.price).toLocaleString()}` : '');
+            return row;
         });
 
         const subtotal = validItems.reduce((sum, item) => sum + Number(item.price), 0);
-        // We only add the subtotal/total row in the table if there is NO combo, or just the subtotal.
-        // User requested special text for combo outside the table.
-        if (!budgetData.isCombo) {
-            tableBody.push(['', '', '', '', 'TOTAL', `$${subtotal.toLocaleString()}`]);
-        } else {
-            tableBody.push(['', '', '', '', 'Subtotal', `$${subtotal.toLocaleString()}`]);
-        }
+
+        const totalLabel = budgetData.isCombo ? 'Subtotal' : 'TOTAL';
+        const totalValue = `$${subtotal.toLocaleString()}`;
+
+        const footerRow = [];
+        const colCount = hasObservations ? 7 : 6;
+        for (let i = 0; i < colCount - 2; i++) footerRow.push('');
+        footerRow.push(totalLabel);
+        footerRow.push(totalValue);
+
+        tableBody.push(footerRow);
 
         autoTable(doc, {
             startY: 105,
-            head: [['Zona / Autoparte', 'Golpes', 'Tamaño', 'Complejidad', 'Observaciones', 'Costo']],
+            head: tableHead,
             body: tableBody,
-            headStyles: { fillColor: [20, 20, 20], textColor: [212, 175, 55] },
+            headStyles: { fillColor: [20, 20, 20], textColor: [212, 175, 55], halign: 'center', valign: 'middle' },
             footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
             theme: 'grid',
-            styles: { fontSize: 9, cellPadding: 3 },
-            columnStyles: {
-                0: { cellWidth: 40 },
-                1: { cellWidth: 20 },
-                2: { cellWidth: 25 },
-                3: { cellWidth: 25 },
-                4: { cellWidth: 'auto' }, // Observaciones takes remaining space
-                5: { cellWidth: 30, halign: 'right' }
+            styles: { fontSize: 8, cellPadding: 2, halign: 'center', valign: 'middle' }, // Default center align
+            columnStyles: hasObservations ? {
+                0: { cellWidth: 35, halign: 'left' }, // Zona
+                1: { cellWidth: 15 }, // Golpes
+                2: { cellWidth: 20 }, // Tamaño
+                3: { cellWidth: 25 }, // Complejidad
+                4: { cellWidth: 30 }, // Expectativa
+                5: { cellWidth: 'auto', halign: 'left' }, // Observaciones
+                6: { cellWidth: 25, halign: 'right' } // Costo
+            } : {
+                0: { cellWidth: 40, halign: 'left' }, // Zona
+                1: { cellWidth: 20 }, // Golpes 
+                2: { cellWidth: 25 }, // Tamaño
+                3: { cellWidth: 30 }, // Complejidad
+                4: { cellWidth: 35 }, // Expectativa
+                5: { cellWidth: 30, halign: 'right' } // Costo
             }
         } as any);
 
@@ -697,18 +733,11 @@ export default function AdminPuntualPage() {
         doc.setTextColor(0, 0, 0);
         doc.setFont("helvetica", "normal");
 
-        const expectationMap: any = {
-            'Buena': 'BUENA (Levantamiento para pintura)',
-            'Media': 'MEDIA (Terminación con detalles poco perceptibles)',
-            'Alta': 'ALTA (Terminación original sin pintar)'
-        };
-
         const scaleItems = [
             `• Nivel de daño: ${budgetData.dspScale.damageLevel.toUpperCase()}`,
             `• Gama del vehículo: ${budgetData.dspScale.vehicleRange.toUpperCase()}`,
             `• Tipo de pintura: ${budgetData.dspScale.paintType.toUpperCase()}`,
             `• Riesgo técnico: ${budgetData.dspScale.technicalRisk.toUpperCase()}`,
-            `• Expectativa de reparación: ${expectationMap[budgetData.dspScale.repairExpectation] || budgetData.dspScale.repairExpectation.toUpperCase()}`
         ];
         scaleItems.forEach(item => {
             doc.text(item, 20, finalY);
@@ -1394,18 +1423,7 @@ export default function AdminPuntualPage() {
                                                 style={{ width: '100%', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px' }}
                                             />
                                         </div>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Expectativa de Reparación</label>
-                                            <select
-                                                value={budgetData.dspScale.repairExpectation}
-                                                onChange={(e) => setBudgetData({ ...budgetData, dspScale: { ...budgetData.dspScale, repairExpectation: e.target.value } })}
-                                                style={{ width: '100%', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px' }}
-                                            >
-                                                <option value="Buena">Buena (P/ Pintura)</option>
-                                                <option value="Media">Media (Detalles)</option>
-                                                <option value="Alta">Alta (Sin pintar)</option>
-                                            </select>
-                                        </div>
+
                                     </div>
                                 </div>
 
@@ -1467,8 +1485,9 @@ export default function AdminPuntualPage() {
                                         <th style={{ padding: '10px', textAlign: 'left' }}>Golpes</th>
                                         <th style={{ padding: '10px', textAlign: 'left' }}>Tamaño</th>
                                         <th style={{ padding: '10px', textAlign: 'left' }}>Complejidad</th>
-                                        <th style={{ padding: '10px', textAlign: 'left' }}>Precio</th>
+                                        <th style={{ padding: '10px', textAlign: 'left' }}>Expectativa</th>
                                         <th style={{ padding: '10px', textAlign: 'left' }}>Observaciones</th>
+                                        <th style={{ padding: '10px', textAlign: 'left' }}>Precio</th>
                                         <th style={{ padding: '10px' }}></th>
                                     </tr>
                                 </thead>
@@ -1497,10 +1516,21 @@ export default function AdminPuntualPage() {
                                                 </select>
                                             </td>
                                             <td style={{ padding: '5px' }}>
-                                                <input type="number" value={item.price} onChange={(e) => handleItemChange(index, 'price', e.target.value === '' ? '' : parseFloat(e.target.value))} placeholder="$" style={{ width: '80px', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px', borderRadius: '3px' }} />
+                                                <select
+                                                    value={item.repairExpectation || 'Alta'}
+                                                    onChange={(e) => handleItemChange(index, 'repairExpectation', e.target.value)}
+                                                    style={{ width: '100px', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px', borderRadius: '3px' }}
+                                                >
+                                                    <option value="Baja">Baja</option>
+                                                    <option value="Media">Media</option>
+                                                    <option value="Alta">Alta</option>
+                                                </select>
                                             </td>
                                             <td style={{ padding: '5px' }}>
                                                 <input type="text" value={item.observations} onChange={(e) => handleItemChange(index, 'observations', e.target.value)} placeholder="..." style={{ width: '100%', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px', borderRadius: '3px' }} />
+                                            </td>
+                                            <td style={{ padding: '5px' }}>
+                                                <input type="number" value={item.price} onChange={(e) => handleItemChange(index, 'price', e.target.value === '' ? '' : parseFloat(e.target.value))} placeholder="$" style={{ width: '80px', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px', borderRadius: '3px' }} />
                                             </td>
                                             <td style={{ padding: '5px', textAlign: 'center' }}>
                                                 <button onClick={() => removeItem(index)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}>&times;</button>
