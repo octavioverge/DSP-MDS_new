@@ -241,6 +241,7 @@ export default function Presupuesto() {
                                     <option value="ABOLLADURA MEDIANA (TAMAÑO PUÑO)">ABOLLADURA MEDIANA (TAMAÑO PUÑO)</option>
                                     <option value="ABOLLADURA GRANDE">ABOLLADURA GRANDE</option>
                                     <option value="GOLPE DE ESTACIONAMIENTO">GOLPE DE ESTACIONAMIENTO</option>
+                                    <option value="GOLPE DE ESTACIONAMIENTO/DAÑO URBANO">GOLPE DE ESTACIONAMIENTO/DAÑO URBANO</option>
                                     <option value="CHOQUE MENOR">CHOQUE MENOR</option>
                                     <option value="DAÑO POR GRANIZO">DAÑO POR GRANIZO</option>
                                     <option value="NO ESTOY SEGURO">NO ESTOY SEGURO</option>

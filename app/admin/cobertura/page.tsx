@@ -89,7 +89,7 @@ export default function AdminCoberturaPage() {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === 'admin123') {
+        if (password === '111355') {
             setIsAuthenticated(true);
             localStorage.setItem('admin_session', 'true');
             fetchRequests();

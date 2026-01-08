@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -47,13 +47,101 @@ export default function AdminPuntualPage() {
         name: '',
         phone: '',
         email: '',
+        location: '',
         make_model: '',
         year: '',
-        damage_type: 'Granizo',
+        licensePlate: '',
+        damage_type: 'ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)',
         damage_location: [] as string[],
         description: ''
     });
+    const [newClientFiles, setNewClientFiles] = useState<FileList | null>(null);
     const [savingClient, setSavingClient] = useState(false);
+
+    const damageLocations = [
+        "CAPOT", "TECHO", "GUARDABARROS DELANTERO", "GUARDABARRO TRASERO",
+        "PUERTA DELANTERA", "PUERTA TRASERA", "TAPA/PORTON- BAÚL",
+        "PARAGOLPE", "PARANTE DE TECHO", "OTRO"
+    ];
+
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState<any>({});
+
+    const startEditing = () => {
+        if (!selectedRequest) return;
+        setEditData({
+            name: selectedRequest.clients?.name || '',
+            phone: selectedRequest.clients?.phone || '',
+            email: selectedRequest.clients?.email || '',
+            location: selectedRequest.clients?.location || '',
+            make_model: selectedRequest.make_model || '',
+            year: selectedRequest.year || '',
+            damage_type: selectedRequest.damage_type || '',
+            description: selectedRequest.description || ''
+        });
+        setIsEditing(true);
+    };
+
+    const handleEditChange = (field: string, value: any) => {
+        setEditData({ ...editData, [field]: value });
+    };
+
+    const saveEditing = async () => {
+        if (!selectedRequest) return;
+
+        try {
+            // Update Client
+            const { error: clientError } = await supabase
+                .from('clients')
+                .update({
+                    name: editData.name,
+                    phone: editData.phone,
+                    email: editData.email,
+                    location: editData.location
+                })
+                .eq('id', selectedRequest.client_id);
+
+            if (clientError) throw clientError;
+
+            // Update Request
+            const { error: reqError } = await supabase
+                .from('service_puntual')
+                .update({
+                    make_model: editData.make_model,
+                    year: editData.year,
+                    damage_type: editData.damage_type,
+                    description: editData.description
+                })
+                .eq('id', selectedRequest.id);
+
+            if (reqError) throw reqError;
+
+            // Update Local State
+            const updatedRequest = {
+                ...selectedRequest,
+                make_model: editData.make_model,
+                year: editData.year,
+                damage_type: editData.damage_type,
+                description: editData.description,
+                clients: {
+                    ...selectedRequest.clients,
+                    name: editData.name,
+                    phone: editData.phone,
+                    email: editData.email,
+                    location: editData.location
+                }
+            };
+
+            setRequests(prev => prev.map(r => r.id === selectedRequest.id ? updatedRequest : r));
+            setSelectedRequest(updatedRequest);
+            setIsEditing(false);
+            alert('Datos actualizados correctamente');
+
+        } catch (error) {
+            console.error('Error updating:', error);
+            alert('Error al actualizar los datos');
+        }
+    };
 
     // Budget State
     const [showBudgetModal, setShowBudgetModal] = useState(false);
@@ -74,7 +162,28 @@ export default function AdminPuntualPage() {
         }[],
         notes: '',
         paymentTerms: 'Efectivo, Transferencia o Mercado Pago.',
-        isCombo: false
+        isCombo: false,
+        // New Technical Fields
+        dspScale: {
+            damageLevel: 'Leve', // Leve, Medio, Grave
+            vehicleRange: 'Media', // Baja, Media, Alta
+            paintType: 'Bicapa', // Monocapa, Bicapa, Tricapa, Metalizado, Perlado
+            technicalRisk: 'Accesibilidad',
+        },
+        technicalObservations: {
+            limitedAccess: false,
+            designLines: false,
+            internalReinforcements: false,
+            priorRepaint: false,
+            partsDisassembly: false,
+        },
+        appliedTechniques: {
+            lateralTension: false,
+            gluePull: false,
+            stretchingBench: false,
+            thermalTempering: false,
+            combinedTechniques: false,
+        }
     });
 
     const openBudgetModal = (req: Request) => {
@@ -102,9 +211,29 @@ export default function AdminPuntualPage() {
             clientEmail: req.clients?.email || '',
             vehicle: `${req.make_model} ${req.year}`,
             items: initialItems,
-            notes: req.description ? `Nota cliente: ${req.description}` : '',
+            notes: '',
             paymentTerms: 'Efectivo, Transferencia o Mercado Pago.',
-            isCombo: false
+            isCombo: false,
+            dspScale: {
+                damageLevel: 'Leve',
+                vehicleRange: 'Media',
+                paintType: 'Bicapa',
+                technicalRisk: 'Accesibilidad',
+            },
+            technicalObservations: {
+                limitedAccess: false,
+                designLines: false,
+                internalReinforcements: false,
+                priorRepaint: false,
+                partsDisassembly: false,
+            },
+            appliedTechniques: {
+                lateralTension: false,
+                gluePull: false,
+                stretchingBench: false,
+                thermalTempering: false,
+                combinedTechniques: false,
+            }
         });
 
         setShowBudgetModal(true);
@@ -112,6 +241,23 @@ export default function AdminPuntualPage() {
 
     const handleNewClientChange = (field: string, value: any) => {
         setNewClientData({ ...newClientData, [field]: value });
+    };
+
+    const handleNewClientCheckChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { value, checked } = e.target;
+        setNewClientData(prev => {
+            if (checked) {
+                return { ...prev, damage_location: [...prev.damage_location, value] };
+            } else {
+                return { ...prev, damage_location: prev.damage_location.filter(loc => loc !== value) };
+            }
+        });
+    };
+
+    const handleNewClientFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setNewClientFiles(e.target.files);
+        }
     };
 
     const handleCreateClient = async () => {
@@ -122,6 +268,32 @@ export default function AdminPuntualPage() {
 
         setSavingClient(true);
         try {
+            const uploadedPhotoUrls: string[] = [];
+
+            // 0. Upload Photos if any
+            if (newClientFiles && newClientFiles.length > 0) {
+                for (let i = 0; i < newClientFiles.length; i++) {
+                    const file = newClientFiles[i];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+                    const { error: uploadError } = await supabase.storage
+                        .from('presupuestos')
+                        .upload(fileName, file);
+
+                    if (uploadError) {
+                        console.error('Error uploading file:', uploadError);
+                        continue;
+                    }
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('presupuestos')
+                        .getPublicUrl(fileName);
+
+                    uploadedPhotoUrls.push(publicUrl);
+                }
+            }
+
             // 1. Create Client first
             const { data: clientData, error: clientError } = await supabase
                 .from('clients')
@@ -129,12 +301,16 @@ export default function AdminPuntualPage() {
                     name: newClientData.name,
                     phone: newClientData.phone,
                     email: newClientData.email,
-                    location: 'Cargado por Admin'
+                    location: newClientData.location || 'Localidad no especificada'
                 }])
                 .select()
                 .single();
 
             if (clientError) throw clientError;
+
+            // Prepare description with license plate
+            // Prepare description with license plate
+            const fullDescription = `${newClientData.licensePlate ? `Patente: ${newClientData.licensePlate}\n\n` : ''}${newClientData.description}`;
 
             // 2. Create Service Request linked to client
             const { data, error } = await supabase
@@ -146,9 +322,9 @@ export default function AdminPuntualPage() {
                         year: newClientData.year,
                         damage_type: newClientData.damage_type,
                         damage_location: newClientData.damage_location,
-                        description: newClientData.description,
+                        description: fullDescription,
                         status: 'Pendiente',
-                        photos: []
+                        photos: uploadedPhotoUrls
                     }
                 ])
                 .select(`
@@ -173,12 +349,15 @@ export default function AdminPuntualPage() {
                     name: '',
                     phone: '',
                     email: '',
+                    location: '',
                     make_model: '',
                     year: '',
-                    damage_type: 'Granizo',
+                    licensePlate: '',
+                    damage_type: 'ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)',
                     damage_location: [],
                     description: ''
                 });
+                setNewClientFiles(null);
                 handleOpenDetail(newReq);
             }
         } catch (error) {
@@ -272,7 +451,7 @@ export default function AdminPuntualPage() {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === 'admin123') {
+        if (password === '111355') {
             setIsAuthenticated(true);
             localStorage.setItem('admin_session', 'true');
             fetchRequests();
@@ -306,6 +485,7 @@ export default function AdminPuntualPage() {
         setSelectedRequest(req);
         setAdminNote(req.admin_notes || '');
         setShowBudgetModal(false);
+        setIsEditing(false);
     };
 
     const handleSaveAdminNote = async () => {
@@ -382,7 +562,7 @@ export default function AdminPuntualPage() {
     };
 
     const addItem = () => {
-        setBudgetData({ ...budgetData, items: [...budgetData.items, { zone: '', dents: '', size: 'Leve', complexity: '', price: 0, observations: '' }] });
+        setBudgetData({ ...budgetData, items: [...budgetData.items, { zone: '', dents: '', size: 'Pequeño', complexity: '', price: 0, observations: '' }] });
     };
 
     const removeItem = (index: number) => {
@@ -484,15 +664,131 @@ export default function AdminPuntualPage() {
             styles: { fontSize: 9, cellPadding: 3 },
             columnStyles: {
                 0: { cellWidth: 40 },
-                1: { cellWidth: 15 },
-                2: { cellWidth: 20 },
-                3: { cellWidth: 20 },
+                1: { cellWidth: 20 },
+                2: { cellWidth: 25 },
+                3: { cellWidth: 25 },
                 4: { cellWidth: 'auto' }, // Observaciones takes remaining space
                 5: { cellWidth: 30, halign: 'right' }
             }
         } as any);
 
         let finalY = (doc as any).lastAutoTable.finalY + 10;
+
+        // --- NEW SECTIONS ---
+        const pageHeight = doc.internal.pageSize.height;
+        const checkPageBreak = (neededSpace: number) => {
+            if (finalY + neededSpace > pageHeight - 20) {
+                doc.addPage();
+                finalY = 20;
+            }
+        };
+
+        checkPageBreak(80);
+
+        doc.setFontSize(11);
+        doc.setTextColor(212, 175, 55); // Gold
+        doc.setFont("helvetica", "bold");
+        doc.text("Escala Técnica de Presupuestación DSP", 15, finalY);
+        finalY += 7;
+
+        doc.setFontSize(9);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+
+        const scaleItems = [
+            `• Nivel de daño: ${budgetData.dspScale.damageLevel.toUpperCase()}`,
+            `• Gama del vehículo: ${budgetData.dspScale.vehicleRange.toUpperCase()}`,
+            `• Tipo de pintura: ${budgetData.dspScale.paintType.toUpperCase()}`,
+            `• Riesgo técnico: ${budgetData.dspScale.technicalRisk.toUpperCase()}`
+        ];
+        scaleItems.forEach(item => {
+            doc.text(item, 20, finalY);
+            finalY += 5;
+        });
+        finalY += 5;
+
+        // Tech Observations & Techniques Side by Side
+        const startY_cols = finalY;
+
+        // Col 1: Observations
+        doc.setTextColor(212, 175, 55);
+        doc.setFont("helvetica", "bold");
+        doc.text("Observaciones Técnicas", 15, finalY);
+        finalY += 7;
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+
+        const obsMap: any = {
+            limitedAccess: "Acceso interno limitado",
+            designLines: "Líneas de diseño / bordes marcados",
+            internalReinforcements: "Refuerzos internos / doble chapa",
+            priorRepaint: "Posible repintado previo",
+            partsDisassembly: "Desarme parcial de accesorios"
+        };
+        Object.keys(budgetData.technicalObservations).forEach((key) => {
+            // @ts-ignore
+            const val = budgetData.technicalObservations[key];
+            const label = obsMap[key] || key;
+            // Checkbox char replacement
+            doc.text(`[ ${val ? 'X' : ' '} ] ${label}`, 20, finalY);
+            finalY += 5;
+        });
+
+        // Col 2: Techniques
+        let finalY_col2 = startY_cols;
+        doc.setTextColor(212, 175, 55);
+        doc.setFont("helvetica", "bold");
+        doc.text("Técnicas Aplicadas", 110, finalY_col2);
+        finalY_col2 += 7;
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+
+        const techMap: any = {
+            lateralTension: "Tensión lateral controlada",
+            gluePull: "Glue Pull (tracción externa)",
+            stretchingBench: "Bancada de estiramiento",
+            thermalTempering: "Templado térmico",
+            combinedTechniques: "Técnicas combinadas"
+        };
+        Object.keys(budgetData.appliedTechniques).forEach((key) => {
+            // @ts-ignore
+            const val = budgetData.appliedTechniques[key];
+            const label = techMap[key] || key;
+            doc.text(`[ ${val ? 'X' : ' '} ] ${label}`, 115, finalY_col2);
+            finalY_col2 += 5;
+        });
+
+        finalY = Math.max(finalY, finalY_col2) + 10;
+
+        checkPageBreak(60);
+
+        // Criterio de Cálculo
+        doc.setTextColor(212, 175, 55);
+        doc.setFont("helvetica", "bold");
+        doc.text("Criterio de Cálculo", 15, finalY);
+        finalY += 7;
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        const calcText = "Valor final del servicio = Valor base según nivel de daño + ajuste por gama del vehículo + ajuste por tipo de pintura + ajuste por riesgo técnico.";
+        const splitCalc = doc.splitTextToSize(calcText, 180);
+        doc.text(splitCalc, 15, finalY);
+        finalY += (splitCalc.length * 4) + 5;
+
+        // Criterios que definen...
+        doc.setTextColor(212, 175, 55);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text("Criterios que definen el valor del servicio DSP", 15, finalY);
+        finalY += 7;
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        const defText = "El valor del servicio de desabollado sin pintura no se define por los materiales utilizados, sino por la técnica aplicada, la experiencia del técnico y el resultado final obtenido. El proceso DSP prioriza la conservación de la pintura original, la intervención mínima sobre la estructura del vehículo, la reducción de tiempos de reparación, la precisión del resultado final y la preservación del valor de reventa.";
+        const splitDef = doc.splitTextToSize(defText, 180);
+        doc.text(splitDef, 15, finalY);
+        finalY += (splitDef.length * 4) + 10;
+        // --- END NEW SECTIONS ---
 
         // Add Discount Text and Final Total if Combo is applied
         if (budgetData.isCombo) {
@@ -518,7 +814,7 @@ export default function AdminPuntualPage() {
         doc.text("Los valores indicados no incluyen impuestos ni cargos que pudieran corresponder según la condición fiscal y el medio de pago.", 15, finalY);
         finalY += 15;
 
-        const pageHeight = doc.internal.pageSize.height;
+
         if (finalY + 80 > pageHeight) {
             doc.addPage();
             finalY = 20;
@@ -538,7 +834,7 @@ export default function AdminPuntualPage() {
         doc.setFontSize(8);
         doc.setTextColor(80);
         doc.setFont("helvetica", "bold");
-        doc.text("Términos y Condiciones (síntesis)", 15, finalY);
+        doc.text("Términos y Condiciones", 15, finalY);
         finalY += 5;
         doc.setFont("helvetica", "normal");
         const termsText = "El vehículo deberá entregarse limpio. El cliente acepta los métodos y técnicas de desabollado sin pintura y los riesgos naturales e inherentes al proceso. En casos poco probables en los que, durante tareas de desarme o desmontaje necesarias para la correcta reparación, pudiera dañarse algún accesorio, MDS asumirá su reposición sin costo adicional para el cliente. En vehículos con pintura repintada existe un mayor riesgo de desprendimiento o daño. En pintura original, la probabilidad de daño es muy baja (aprox. 1 en 100), aunque no nula. Si al iniciar la intervención se detectaran condiciones no visibles durante la inspección inicial, el cliente será informado antes de continuar el trabajo.";
@@ -738,19 +1034,62 @@ export default function AdminPuntualPage() {
                         <h2 style={{ color: '#D4AF37', marginBottom: '20px', paddingRight: '40px' }}>Solicitud #{selectedRequest.id ? selectedRequest.id.substring(0, 8) : ''}</h2>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', marginBottom: '30px' }}>
                             <div>
-                                <h3 style={{ borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '15px' }}>Información del Cliente</h3>
-                                <div style={{ marginBottom: '10px' }}><strong>Nombre:</strong> {selectedRequest.clients?.name}</div>
-                                <div style={{ marginBottom: '10px' }}><strong>Teléfono:</strong> <a href={`https://wa.me/${selectedRequest.clients?.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: '#90EE90' }}>{selectedRequest.clients?.phone} <i className="fab fa-whatsapp"></i></a></div>
-                                <div style={{ marginBottom: '10px' }}><strong>Email:</strong> {selectedRequest.clients?.email}</div>
-                                <div style={{ marginBottom: '10px' }}><strong>Ubicación:</strong> {selectedRequest.clients?.location}</div>
-                                <div style={{ marginBottom: '10px' }}><strong>Vehículo:</strong> {selectedRequest.make_model} ({selectedRequest.year})</div>
-                                <h3 style={{ borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '15px', marginTop: '20px' }}>Detalles del Daño</h3>
-                                <div style={{ marginBottom: '10px' }}><strong>Tipo:</strong> {selectedRequest.damage_type}</div>
-                                <div style={{ marginBottom: '10px' }}><strong>Ubicación:</strong> {(selectedRequest.damage_location || []).join(', ')}</div>
-                                <div style={{ marginBottom: '10px' }}>
-                                    <strong>Nota del Cliente:</strong>
-                                    <p style={{ background: '#222', padding: '10px', borderRadius: '5px', marginTop: '5px', color: '#ccc' }}>{selectedRequest.description || 'Sin notas.'}</p>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '15px' }}>
+                                    <h3 style={{ margin: 0 }}>Información del Cliente</h3>
+                                    {!isEditing ? (
+                                        <button onClick={startEditing} style={{ background: 'none', border: 'none', color: '#D4AF37', cursor: 'pointer' }}>
+                                            <i className="fas fa-edit"></i> Editar
+                                        </button>
+                                    ) : (
+                                        <div>
+                                            <button onClick={saveEditing} style={{ marginRight: '10px', color: '#90EE90', background: 'none', border: 'none', cursor: 'pointer' }}>Guardar</button>
+                                            <button onClick={() => setIsEditing(false)} style={{ color: '#ff6b6b', background: 'none', border: 'none', cursor: 'pointer' }}>Cancelar</button>
+                                        </div>
+                                    )}
                                 </div>
+
+                                {!isEditing ? (
+                                    <>
+                                        <div style={{ marginBottom: '10px' }}><strong>Nombre:</strong> {selectedRequest.clients?.name}</div>
+                                        <div style={{ marginBottom: '10px' }}><strong>Teléfono:</strong> <a href={`https://wa.me/${selectedRequest.clients?.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: '#90EE90' }}>{selectedRequest.clients?.phone} <i className="fab fa-whatsapp"></i></a></div>
+                                        <div style={{ marginBottom: '10px' }}><strong>Email:</strong> {selectedRequest.clients?.email}</div>
+                                        <div style={{ marginBottom: '10px' }}><strong>Ubicación:</strong> {selectedRequest.clients?.location}</div>
+                                        <div style={{ marginBottom: '10px' }}><strong>Vehículo:</strong> {selectedRequest.make_model} ({selectedRequest.year})</div>
+
+                                        <h3 style={{ borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '15px', marginTop: '20px' }}>Detalles del Daño</h3>
+                                        <div style={{ marginBottom: '10px' }}><strong>Tipo:</strong> {selectedRequest.damage_type}</div>
+                                        <div style={{ marginBottom: '10px' }}><strong>Ubicación:</strong> {(selectedRequest.damage_location || []).join(', ')}</div>
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <strong>Nota del Cliente:</strong>
+                                            <p style={{ background: '#222', padding: '10px', borderRadius: '5px', marginTop: '5px', color: '#ccc', whiteSpace: 'pre-wrap' }}>{selectedRequest.description || 'Sin notas.'}</p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div style={{ display: 'grid', gap: '10px' }}>
+                                        <input type="text" value={editData.name} onChange={(e) => handleEditChange('name', e.target.value)} placeholder="Nombre" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
+                                        <input type="text" value={editData.phone} onChange={(e) => handleEditChange('phone', e.target.value)} placeholder="Teléfono" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
+                                        <input type="email" value={editData.email} onChange={(e) => handleEditChange('email', e.target.value)} placeholder="Email" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
+                                        <input type="text" value={editData.location} onChange={(e) => handleEditChange('location', e.target.value)} placeholder="Ubicación" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                            <input type="text" value={editData.make_model} onChange={(e) => handleEditChange('make_model', e.target.value)} placeholder="Vehículo" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
+                                            <input type="text" value={editData.year} onChange={(e) => handleEditChange('year', e.target.value)} placeholder="Año" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
+                                        </div>
+                                        <h4 style={{ marginTop: '15px', color: '#888' }}>Detalles</h4>
+                                        <select value={editData.damage_type} onChange={(e) => handleEditChange('damage_type', e.target.value)} style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }}>
+                                            <option value="ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)">ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)</option>
+                                            <option value="ABOLLADURA MEDIANA (TAMAÑO PUÑO)">ABOLLADURA MEDIANA (TAMAÑO PUÑO)</option>
+                                            <option value="ABOLLADURA GRANDE">ABOLLADURA GRANDE</option>
+                                            <option value="GOLPE DE ESTACIONAMIENTO">GOLPE DE ESTACIONAMIENTO</option>
+                                            <option value="GOLPE DE ESTACIONAMIENTO/DAÑO URBANO">GOLPE DE ESTACIONAMIENTO/DAÑO URBANO</option>
+                                            <option value="CHOQUE MENOR">CHOQUE MENOR</option>
+                                            <option value="DAÑO POR GRANIZO">DAÑO POR GRANIZO</option>
+                                            <option value="NO ESTOY SEGURO">NO ESTOY SEGURO</option>
+                                            <option value="Otro">Otro</option>
+                                        </select>
+                                        <textarea value={editData.description} onChange={(e) => handleEditChange('description', e.target.value)} placeholder="Descripción / Notas" style={{ width: '100%', height: '100px', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
+                                    </div>
+                                )}
+
                                 <div style={{ marginTop: '20px' }}>
                                     <strong>Fotos del Cliente:</strong>
                                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
@@ -811,7 +1150,7 @@ export default function AdminPuntualPage() {
                     display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px'
                 }} onClick={() => setShowNewClientModal(false)}>
                     <div style={{
-                        backgroundColor: '#1a1a1a', width: '500px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto',
+                        backgroundColor: '#1a1a1a', width: '800px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto',
                         borderRadius: '10px', border: '1px solid #333', padding: '20px', position: 'relative'
                     }} onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => setShowNewClientModal(false)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
@@ -824,6 +1163,10 @@ export default function AdminPuntualPage() {
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ display: 'block', marginBottom: '5px' }}>Teléfono *</label>
                             <input type="text" value={newClientData.phone} onChange={(e) => handleNewClientChange('phone', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>Localidad *</label>
+                            <input type="text" value={newClientData.location} onChange={(e) => handleNewClientChange('location', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
@@ -840,13 +1183,44 @@ export default function AdminPuntualPage() {
                             </div>
                         </div>
                         <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>Patente</label>
+                            <input type="text" value={newClientData.licensePlate} onChange={(e) => handleNewClientChange('licensePlate', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
                             <label style={{ display: 'block', marginBottom: '5px' }}>Tipo de Daño</label>
                             <select value={newClientData.damage_type} onChange={(e) => handleNewClientChange('damage_type', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }}>
-                                <option value="Granizo">Granizo</option>
-                                <option value="Portazo">Portazo</option>
-                                <option value="Choque">Choque</option>
+                                <option value="ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)">ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)</option>
+                                <option value="ABOLLADURA MEDIANA (TAMAÑO PUÑO)">ABOLLADURA MEDIANA (TAMAÑO PUÑO)</option>
+                                <option value="ABOLLADURA GRANDE">ABOLLADURA GRANDE</option>
+                                <option value="GOLPE DE ESTACIONAMIENTO">GOLPE DE ESTACIONAMIENTO</option>
+                                <option value="GOLPE DE ESTACIONAMIENTO/DAÑO URBANO">GOLPE DE ESTACIONAMIENTO/DAÑO URBANO</option>
+                                <option value="CHOQUE MENOR">CHOQUE MENOR</option>
+                                <option value="DAÑO POR GRANIZO">DAÑO POR GRANIZO</option>
+                                <option value="NO ESTOY SEGURO">NO ESTOY SEGURO</option>
                                 <option value="Otro">Otro</option>
                             </select>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>Ubicación del Daño</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
+                                {damageLocations.map(loc => (
+                                    <label key={loc} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                        <input
+                                            type="checkbox"
+                                            value={loc}
+                                            checked={newClientData.damage_location.includes(loc)}
+                                            onChange={handleNewClientCheckChange}
+                                            style={{ marginRight: '8px' }}
+                                        />
+                                        {loc}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>Fotos del Daño</label>
+                            <input type="file" multiple accept="image/*" onChange={handleNewClientFileChange} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
+                            <small style={{ color: '#aaa' }}>Se pueden subir múltiples fotos.</small>
                         </div>
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '5px' }}>Notas Iniciales</label>
@@ -899,6 +1273,115 @@ export default function AdminPuntualPage() {
                             </div>
                         </div>
 
+                        {/* Technical Data Section */}
+                        <div style={{ marginBottom: '20px', background: '#222', padding: '15px', borderRadius: '5px' }}>
+                            <h3 style={{ color: '#D4AF37', borderBottom: '1px solid #444', paddingBottom: '5px', marginBottom: '15px' }}>Escala Técnica y Observaciones</h3>
+
+                            {/* Escala Técnica */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                                <div>
+                                    <h4 style={{ color: '#ccc', marginBottom: '10px' }}>Escala Técnica DSP</h4>
+                                    <div style={{ display: 'grid', gap: '10px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Nivel de Daño</label>
+                                            <select
+                                                value={budgetData.dspScale.damageLevel}
+                                                onChange={(e) => setBudgetData({ ...budgetData, dspScale: { ...budgetData.dspScale, damageLevel: e.target.value } })}
+                                                style={{ width: '100%', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px' }}
+                                            >
+                                                <option value="Leve">Leve</option>
+                                                <option value="Medio">Medio</option>
+                                                <option value="Grave">Grave</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Gama del Vehículo</label>
+                                            <select
+                                                value={budgetData.dspScale.vehicleRange}
+                                                onChange={(e) => setBudgetData({ ...budgetData, dspScale: { ...budgetData.dspScale, vehicleRange: e.target.value } })}
+                                                style={{ width: '100%', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px' }}
+                                            >
+                                                <option value="Baja">Baja</option>
+                                                <option value="Media">Media</option>
+                                                <option value="Alta">Alta</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Tipo de Pintura</label>
+                                            <select
+                                                value={budgetData.dspScale.paintType}
+                                                onChange={(e) => setBudgetData({ ...budgetData, dspScale: { ...budgetData.dspScale, paintType: e.target.value } })}
+                                                style={{ width: '100%', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px' }}
+                                            >
+                                                <option value="Monocapa">Monocapa</option>
+                                                <option value="Bicapa">Bicapa</option>
+                                                <option value="Tricapa">Tricapa</option>
+                                                <option value="Metalizado">Metalizado</option>
+                                                <option value="Perlado">Perlado</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Riesgo Técnico</label>
+                                            <input
+                                                type="text"
+                                                value={budgetData.dspScale.technicalRisk}
+                                                onChange={(e) => setBudgetData({ ...budgetData, dspScale: { ...budgetData.dspScale, technicalRisk: e.target.value } })}
+                                                style={{ width: '100%', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px' }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 style={{ color: '#ccc', marginBottom: '10px' }}>Observaciones Técnicas</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '5px' }}>
+                                        {[
+                                            { key: 'limitedAccess', label: 'Acceso interno limitado' },
+                                            { key: 'designLines', label: 'Líneas de diseño / bordes marcados' },
+                                            { key: 'internalReinforcements', label: 'Refuerzos internos / doble chapa' },
+                                            { key: 'priorRepaint', label: 'Posible repintado previo' },
+                                            { key: 'partsDisassembly', label: 'Desarme parcial de accesorios' },
+                                        ].map((item: any) => (
+                                            <label key={item.key} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    // @ts-ignore
+                                                    checked={budgetData.technicalObservations[item.key]}
+                                                    // @ts-ignore
+                                                    onChange={(e) => setBudgetData({ ...budgetData, technicalObservations: { ...budgetData.technicalObservations, [item.key]: e.target.checked } })}
+                                                    style={{ marginRight: '8px' }}
+                                                />
+                                                {item.label}
+                                            </label>
+                                        ))}
+                                    </div>
+
+                                    <h4 style={{ color: '#ccc', marginBottom: '10px', marginTop: '15px' }}>Técnicas Aplicadas</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '5px' }}>
+                                        {[
+                                            { key: 'lateralTension', label: 'Tensión lateral controlada' },
+                                            { key: 'gluePull', label: 'Glue Pull (tracción externa)' },
+                                            { key: 'stretchingBench', label: 'Bancada de estiramiento' },
+                                            { key: 'thermalTempering', label: 'Templado térmico' },
+                                            { key: 'combinedTechniques', label: 'Técnicas combinadas' },
+                                        ].map((item: any) => (
+                                            <label key={item.key} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    // @ts-ignore
+                                                    checked={budgetData.appliedTechniques[item.key]}
+                                                    // @ts-ignore
+                                                    onChange={(e) => setBudgetData({ ...budgetData, appliedTechniques: { ...budgetData.appliedTechniques, [item.key]: e.target.checked } })}
+                                                    style={{ marginRight: '8px' }}
+                                                />
+                                                {item.label}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div style={{ overflowX: 'auto', marginBottom: '20px' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                                 <thead>
@@ -923,9 +1406,9 @@ export default function AdminPuntualPage() {
                                             </td>
                                             <td style={{ padding: '5px' }}>
                                                 <select value={item.size} onChange={(e) => handleItemChange(index, 'size', e.target.value)} style={{ width: '80px', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px', borderRadius: '3px' }}>
-                                                    <option value="Leve">Leve</option>
-                                                    <option value="Medio">Medio</option>
-                                                    <option value="Grave">Grave</option>
+                                                    <option value="Pequeño">Pequeño</option>
+                                                    <option value="Mediano">Mediano</option>
+                                                    <option value="Grande">Grande</option>
                                                 </select>
                                             </td>
                                             <td style={{ padding: '5px' }}>
@@ -982,21 +1465,24 @@ export default function AdminPuntualPage() {
                         </div>
 
                     </div>
-                </div>
-            )}
+                </div >
+            )
+            }
 
-            {selectedPhoto && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                    display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: '20px'
-                }} onClick={() => setSelectedPhoto(null)}>
-                    <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}>
-                        <button onClick={() => setSelectedPhoto(null)} style={{ position: 'absolute', top: '-40px', right: '-40px', background: 'none', border: 'none', color: '#fff', fontSize: '2rem', cursor: 'pointer' }}>&times;</button>
-                        <img src={selectedPhoto} alt="Zoom" style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: '5px', boxShadow: '0 0 20px rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()} />
+            {
+                selectedPhoto && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: '20px'
+                    }} onClick={() => setSelectedPhoto(null)}>
+                        <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}>
+                            <button onClick={() => setSelectedPhoto(null)} style={{ position: 'absolute', top: '-40px', right: '-40px', background: 'none', border: 'none', color: '#fff', fontSize: '2rem', cursor: 'pointer' }}>&times;</button>
+                            <img src={selectedPhoto} alt="Zoom" style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: '5px', boxShadow: '0 0 20px rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()} />
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
 
