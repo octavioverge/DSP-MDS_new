@@ -198,7 +198,7 @@ export default function AdminPuntualPage() {
         const initialItems = fixedZones.map(zone => ({
             zone: zone,
             dents: '',
-            size: '',
+            size: 'Leve',
             complexity: '',
             price: 0,
             observations: ''
@@ -564,7 +564,7 @@ export default function AdminPuntualPage() {
     };
 
     const addItem = () => {
-        setBudgetData({ ...budgetData, items: [...budgetData.items, { zone: '', dents: '', size: 'Pequeño', complexity: '', price: 0, observations: '' }] });
+        setBudgetData({ ...budgetData, items: [...budgetData.items, { zone: '', dents: '', size: 'Leve', complexity: '', price: 0, observations: '' }] });
     };
 
     const removeItem = (index: number) => {
@@ -797,6 +797,62 @@ export default function AdminPuntualPage() {
         const splitDef = doc.splitTextToSize(defText, 180);
         doc.text(splitDef, 15, finalY);
         finalY += (splitDef.length * 4) + 10;
+
+        // Expectativa de Reparación - Definición de Alcance
+        checkPageBreak(80);
+        doc.setTextColor(212, 175, 55);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text("Expectativa de Reparación – Definición de Alcance", 15, finalY);
+        finalY += 7;
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        const introExp = "Con el objetivo de brindar una gestión transparente y evitar malos entendidos, se establece previamente la expectativa de reparación acordada, la cual define el nivel de terminación y resultado esperado del servicio.";
+        const splitIntroExp = doc.splitTextToSize(introExp, 180);
+        doc.text(splitIntroExp, 15, finalY);
+        finalY += (splitIntroExp.length * 4) + 5;
+
+        // BAJA
+        doc.setFont("helvetica", "bold");
+        doc.text("Expectativa BAJA – Reparación para pintura", 15, finalY);
+        finalY += 5;
+        doc.setFont("helvetica", "normal");
+        const textBaja = "Reparación orientada a recuperar la autoparte de su daño principal, enderezando el panel hasta llevarlo nuevamente a un plano funcional. No se busca una terminación final ni estética, ni la corrección total de daños estructurales menores o defectos en la pintura. Este tipo de reparación tiene como finalidad evitar el reemplazo de la autoparte y dejarla en condiciones para que posteriormente se realice un trabajo tradicional de chapa y pintura, donde se logrará el acabado final.";
+        const splitBaja = doc.splitTextToSize(textBaja, 180);
+        doc.text(splitBaja, 15, finalY);
+        finalY += (splitBaja.length * 4) + 5;
+
+        // MEDIA
+        checkPageBreak(30);
+        doc.setFont("helvetica", "bold");
+        doc.text("Expectativa MEDIA – Terminación final muy buena", 15, finalY);
+        finalY += 5;
+        doc.setFont("helvetica", "normal");
+        const textMedia = "Reparación con terminación final, logrando un panel al plano y funcional, con un resultado estético muy bueno. Pueden permanecer mínimas ondulaciones o texturas muy finas, difíciles de percibir a simple vista y que no afectan el uso ni el aspecto general del vehículo.";
+        const splitMedia = doc.splitTextToSize(textMedia, 180);
+        doc.text(splitMedia, 15, finalY);
+        finalY += (splitMedia.length * 4) + 5;
+
+        // ALTA
+        checkPageBreak(30);
+        doc.setFont("helvetica", "bold");
+        doc.text("Expectativa ALTA – Terminación final premium", 15, finalY);
+        finalY += 5;
+        doc.setFont("helvetica", "normal");
+        const textAlta = "Reparación con terminación final de máximo nivel, donde el panel recupera su forma, textura y apariencia original. El resultado es equivalente al estado de fábrica, sin evidencias visibles del daño previo, dentro de las posibilidades técnicas del desabollado sin pintura.";
+        const splitAlta = doc.splitTextToSize(textAlta, 180);
+        doc.text(splitAlta, 15, finalY);
+        finalY += (splitAlta.length * 4) + 5;
+
+        // Conclusión
+        doc.setFont("helvetica", "italic");
+        const conclusion = "La expectativa de reparación seleccionada influye directamente en el tiempo de trabajo, complejidad técnica y valor del servicio.";
+        const splitConclusion = doc.splitTextToSize(conclusion, 180);
+        doc.text(splitConclusion, 15, finalY);
+        finalY += (splitConclusion.length * 4) + 10;
+
         // --- END NEW SECTIONS ---
 
         // Add Discount Text and Final Total if Combo is applied
@@ -1427,8 +1483,8 @@ export default function AdminPuntualPage() {
                                             </td>
                                             <td style={{ padding: '5px' }}>
                                                 <select value={item.size} onChange={(e) => handleItemChange(index, 'size', e.target.value)} style={{ width: '80px', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px', borderRadius: '3px' }}>
-                                                    <option value="Pequeño">Pequeño</option>
-                                                    <option value="Mediano">Mediano</option>
+                                                    <option value="Leve">Leve</option>
+                                                    <option value="Medio">Medio</option>
                                                     <option value="Grande">Grande</option>
                                                 </select>
                                             </td>
