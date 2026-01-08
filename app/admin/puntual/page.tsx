@@ -607,7 +607,7 @@ export default function AdminPuntualPage() {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(12);
         doc.setFont("helvetica", "normal");
-        doc.text("Técnico Sacabollos - Desabollado Sin Pintura", 55, 28);
+        doc.text("Técnico sacabollos certificado - Desabollado Sin Pintura", 55, 28);
         doc.setFontSize(9);
         doc.text("Calle 461 B entre 21 y 21 A, City Bell", 200, 15, { align: 'right' });
         doc.text("Tel: 221 522 2729", 200, 20, { align: 'right' });
