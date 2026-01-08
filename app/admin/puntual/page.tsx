@@ -169,6 +169,7 @@ export default function AdminPuntualPage() {
             vehicleRange: 'Media', // Baja, Media, Alta
             paintType: 'Bicapa', // Monocapa, Bicapa, Tricapa, Metalizado, Perlado
             technicalRisk: 'Accesibilidad',
+            repairExpectation: 'Alta', // Buena, Media, Alta
         },
         technicalObservations: {
             limitedAccess: false,
@@ -219,6 +220,7 @@ export default function AdminPuntualPage() {
                 vehicleRange: 'Media',
                 paintType: 'Bicapa',
                 technicalRisk: 'Accesibilidad',
+                repairExpectation: 'Alta',
             },
             technicalObservations: {
                 limitedAccess: false,
@@ -695,11 +697,18 @@ export default function AdminPuntualPage() {
         doc.setTextColor(0, 0, 0);
         doc.setFont("helvetica", "normal");
 
+        const expectationMap: any = {
+            'Buena': 'BUENA (Levantamiento para pintura)',
+            'Media': 'MEDIA (Terminación con detalles poco perceptibles)',
+            'Alta': 'ALTA (Terminación original sin pintar)'
+        };
+
         const scaleItems = [
             `• Nivel de daño: ${budgetData.dspScale.damageLevel.toUpperCase()}`,
             `• Gama del vehículo: ${budgetData.dspScale.vehicleRange.toUpperCase()}`,
             `• Tipo de pintura: ${budgetData.dspScale.paintType.toUpperCase()}`,
-            `• Riesgo técnico: ${budgetData.dspScale.technicalRisk.toUpperCase()}`
+            `• Riesgo técnico: ${budgetData.dspScale.technicalRisk.toUpperCase()}`,
+            `• Expectativa de reparación: ${expectationMap[budgetData.dspScale.repairExpectation] || budgetData.dspScale.repairExpectation.toUpperCase()}`
         ];
         scaleItems.forEach(item => {
             doc.text(item, 20, finalY);
@@ -1328,6 +1337,18 @@ export default function AdminPuntualPage() {
                                                 onChange={(e) => setBudgetData({ ...budgetData, dspScale: { ...budgetData.dspScale, technicalRisk: e.target.value } })}
                                                 style={{ width: '100%', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px' }}
                                             />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Expectativa de Reparación</label>
+                                            <select
+                                                value={budgetData.dspScale.repairExpectation}
+                                                onChange={(e) => setBudgetData({ ...budgetData, dspScale: { ...budgetData.dspScale, repairExpectation: e.target.value } })}
+                                                style={{ width: '100%', background: '#333', border: '1px solid #444', color: '#fff', padding: '5px' }}
+                                            >
+                                                <option value="Buena">Buena (P/ Pintura)</option>
+                                                <option value="Media">Media (Detalles)</option>
+                                                <option value="Alta">Alta (Sin pintar)</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
