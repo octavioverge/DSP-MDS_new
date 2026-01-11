@@ -205,11 +205,11 @@ export default function DemoForm() {
                     {/* Datos Vehículo */}
                     <div style={{ marginTop: '30px' }}>
                         <h4 style={{ color: '#fff', borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '20px', fontSize: '1.2rem' }}>Datos del Vehículo</h4>
-                        <div className="form-row" style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)' }}>
-                            <div className="form-group">
-                                <label>Marca y Modelo *</label>
-                                <input type="text" name="make" required value={formData.make} onChange={handleInputChange} />
-                            </div>
+                        <div className="form-group" style={{ marginBottom: '20px' }}>
+                            <label>Marca y Modelo *</label>
+                            <input type="text" name="make" required value={formData.make} onChange={handleInputChange} />
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Año</label>
                                 <input type="text" name="year" value={formData.year} onChange={handleInputChange} />
@@ -298,7 +298,19 @@ export default function DemoForm() {
                         </label>
                     </div>
 
-                    <button type="submit" disabled={isSubmitting} className="btn-gold" style={{ width: '100%', marginTop: '30px', padding: '15px', fontSize: '1.1rem' }}>
+                    <button
+                        type="submit"
+                        disabled={isSubmitting || !formData.terms1 || !formData.terms2}
+                        className="btn-gold"
+                        style={{
+                            width: '100%',
+                            marginTop: '30px',
+                            padding: '15px',
+                            fontSize: '1.1rem',
+                            opacity: (!formData.terms1 || !formData.terms2 || isSubmitting) ? 0.5 : 1,
+                            cursor: (!formData.terms1 || !formData.terms2 || isSubmitting) ? 'not-allowed' : 'pointer'
+                        }}
+                    >
                         {isSubmitting ? `Enviando... ${uploadProgress}%` : 'SOLICITAR DEMOSTRACIÓN'}
                     </button>
 
