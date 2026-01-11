@@ -1,5 +1,6 @@
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import ScrollAnimations from "@/app/components/ScrollAnimations";
 
 export default function WebsiteLayout({
     children,
@@ -8,6 +9,7 @@ export default function WebsiteLayout({
 }) {
     return (
         <>
+            <ScrollAnimations />
             <Navbar />
             {children}
             <Footer />

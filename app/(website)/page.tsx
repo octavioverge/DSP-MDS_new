@@ -1,4 +1,3 @@
-import ScrollAnimations from '@/app/components/ScrollAnimations';
 import Link from 'next/link';
 import Image from 'next/image';
 import ReviewsCarousel from '@/app/components/ReviewsCarousel';
@@ -6,7 +5,6 @@ import ReviewsCarousel from '@/app/components/ReviewsCarousel';
 export default function Home() {
   return (
     <>
-      <ScrollAnimations />
       {/* Hero Section */}
       <header id="hero" className="hero">
         <Image

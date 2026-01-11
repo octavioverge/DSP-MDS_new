@@ -92,6 +92,20 @@ export default function Navbar() {
                                 FORMACIÓN
                             </Link>
                         </li>
+                        <li>
+                            <Link href="/demo-reparacion-sin-pintura" style={{
+                                border: '1px solid #D4AF37',
+                                padding: '8px 12px',
+                                borderRadius: '4px',
+                                color: '#D4AF37',
+                                display: 'inline-block',
+                                textAlign: 'center',
+                                fontSize: '0.8rem',
+                                lineHeight: '1.2'
+                            }}>
+                                DEMO TÉCNICA
+                            </Link>
+                        </li>
                         <li><Link href="/presupuesto" className="btn-gold-outline">Presupuesto</Link></li>
                     </ul>
                     <div className="hamburger" onClick={toggleMenu}>
@@ -108,6 +122,7 @@ export default function Navbar() {
                 <Link href="/#certificates" onClick={(e) => handleScroll(e, 'certificates')}>Certificaciones</Link>
                 <Link href="/cobertura" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>COBERTURA</Link>
                 <Link href="/formacion" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>FORMACIÓN</Link>
+                <Link href="/demo-reparacion-sin-pintura" onClick={closeMenu} style={{ color: '#D4AF37', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px' }}>DEMO TÉCNICA</Link>
                 <Link href="/presupuesto" onClick={closeMenu} style={{ backgroundColor: '#D4AF37', color: '#121212', border: '1px solid #D4AF37', padding: '10px 20px', borderRadius: '5px', fontWeight: 'bold' }}>PRESUPUESTO</Link>
             </div>
         </>
