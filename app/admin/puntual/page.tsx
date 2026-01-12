@@ -152,6 +152,7 @@ export default function AdminPuntualPage() {
         clientPhone: '',
         clientEmail: '',
         vehicle: '',
+        licensePlate: '',
         items: [] as {
             zone: string;
             dents: string;
@@ -213,6 +214,7 @@ export default function AdminPuntualPage() {
             clientPhone: req.clients?.phone || '',
             clientEmail: req.clients?.email || '',
             vehicle: `${req.make_model} ${req.year}`,
+            licensePlate: req.description?.match(/Patente:\s*([^\n]+)/i)?.[1]?.trim() || '',
             items: initialItems,
             notes: '',
             paymentTerms: 'Efectivo, Transferencia o Mercado Pago.',
@@ -629,8 +631,9 @@ export default function AdminPuntualPage() {
         doc.text(budgetData.clientName, 15, 77);
         doc.setFont("helvetica", "normal");
         doc.text(`Vehículo: ${budgetData.vehicle}`, 15, 84);
-        doc.text(`Tel: ${budgetData.clientPhone}`, 15, 91);
-        doc.text(`Email: ${budgetData.clientEmail}`, 100, 91);
+        doc.text(`Patente: ${budgetData.licensePlate}`, 15, 91);
+        doc.text(`Tel: ${budgetData.clientPhone}`, 15, 98);
+        doc.text(`Email: ${budgetData.clientEmail}`, 100, 98);
 
         const validItems = budgetData.items.filter(item =>
             (item.dents && item.dents.trim() !== '') ||
@@ -972,10 +975,15 @@ export default function AdminPuntualPage() {
 
         try {
             setUploadingAdmin(true);
-            const fileName = `budget_${budgetData.clientName.replace(/\s+/g, '')}_${Date.now()}.pdf`;
+            const cleanClientName = budgetData.clientName.replace(/[^a-zA-Z0-9]/g, '_');
+            const fileName = `budget_${cleanClientName}_${Date.now()}.pdf`;
+
             const { error: uploadError } = await supabase.storage
                 .from('presupuestos')
-                .upload(fileName, pdfBlob);
+                .upload(fileName, pdfBlob, {
+                    contentType: 'application/pdf',
+                    upsert: false
+                });
 
             if (!uploadError) {
                 const { data: { publicUrl } } = supabase.storage
@@ -997,9 +1005,9 @@ export default function AdminPuntualPage() {
             } else {
                 throw uploadError;
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert('Error al subir el presupuesto a la nube.');
+            alert(`Error al subir el presupuesto a la nube: ${e.message || 'Error desconocido'}`);
         } finally {
             setUploadingAdmin(false);
         }
@@ -1352,6 +1360,10 @@ export default function AdminPuntualPage() {
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Vehículo</label>
                                 <input type="text" value={budgetData.vehicle} onChange={(e) => handleBudgetChange('vehicle', e.target.value)} style={{ background: 'transparent', border: 'none', color: '#fff', width: '100%' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Patente</label>
+                                <input type="text" value={budgetData.licensePlate} onChange={(e) => handleBudgetChange('licensePlate', e.target.value)} style={{ background: 'transparent', border: 'none', color: '#fff', width: '100%' }} />
                             </div>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Cliente</label>
