@@ -10,6 +10,9 @@ export const metadata: Metadata = {
         url: 'https://www.desabolladosinpinturamds.com.ar/demo-reparacion-sin-pintura',
         type: 'website',
     },
+    alternates: {
+        canonical: '/demo-reparacion-sin-pintura',
+    },
 };
 
 export default function DemoPage() {

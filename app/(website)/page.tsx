@@ -2,6 +2,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import ReviewsCarousel from '@/app/components/ReviewsCarousel';
 
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/',
+  },
+};
+
 export default function Home() {
   return (
     <>

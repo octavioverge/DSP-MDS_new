@@ -1,5 +1,14 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import ScrollAnimations from '../../components/ScrollAnimations';
+
+export const metadata: Metadata = {
+    title: 'Formación Técnica DSP | Cursos de Sacabollos',
+    description: 'Capacitación profesional en desabollado sin pintura. Cursos online y presenciales para aprender el oficio de sacabollos.',
+    alternates: {
+        canonical: '/formacion',
+    },
+};
 
 export default function FormacionPage() {
     return (

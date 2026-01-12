@@ -24,9 +24,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Matías Da Silva" }],
   creator: "Matías Da Silva",
   metadataBase: new URL('https://www.desabolladosinpinturamds.com.ar'),
-  alternates: {
-    canonical: '/',
-  },
+
   openGraph: {
     title: "DSP-MDS | Técnico Sacabollos - Calidad Original",
     description: "Recuperamos la estética de tu vehículo sin repintar. Especialistas en granizo y bollos de estacionamiento en City Bell.",
