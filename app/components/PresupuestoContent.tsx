@@ -134,7 +134,7 @@ export default function PresupuestoContent() {
                         damage_type: formData.damageType,
                         damage_location: formData.damageLocation,
                         photos: uploadedPhotoUrls,
-                        description: formData.description,
+                        description: `${formData.licensePlate ? `Patente: ${formData.licensePlate}\n\n` : ''}${formData.description}`,
                         status: 'Pendiente'
                     }
                 ]);

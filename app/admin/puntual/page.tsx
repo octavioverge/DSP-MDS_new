@@ -69,6 +69,9 @@ export default function AdminPuntualPage() {
 
     const startEditing = () => {
         if (!selectedRequest) return;
+        const patenteMatch = selectedRequest.description?.match(/Patente:\s*([^\n]+)/i);
+        const descriptionClean = selectedRequest.description?.replace(/Patente:\s*[^\n]+(\n\n)?/i, '') || '';
+
         setEditData({
             name: selectedRequest.clients?.name || '',
             phone: selectedRequest.clients?.phone || '',
@@ -77,7 +80,8 @@ export default function AdminPuntualPage() {
             make_model: selectedRequest.make_model || '',
             year: selectedRequest.year || '',
             damage_type: selectedRequest.damage_type || '',
-            description: selectedRequest.description || ''
+            description: descriptionClean,
+            licensePlate: patenteMatch?.[1]?.trim() || ''
         });
         setIsEditing(true);
     };
@@ -103,6 +107,9 @@ export default function AdminPuntualPage() {
 
             if (clientError) throw clientError;
 
+            // Re-combine description
+            const fullDescription = `${editData.licensePlate ? `Patente: ${editData.licensePlate}\n\n` : ''}${editData.description}`;
+
             // Update Request
             const { error: reqError } = await supabase
                 .from('service_puntual')
@@ -110,7 +117,7 @@ export default function AdminPuntualPage() {
                     make_model: editData.make_model,
                     year: editData.year,
                     damage_type: editData.damage_type,
-                    description: editData.description
+                    description: fullDescription
                 })
                 .eq('id', selectedRequest.id);
 
@@ -122,7 +129,7 @@ export default function AdminPuntualPage() {
                 make_model: editData.make_model,
                 year: editData.year,
                 damage_type: editData.damage_type,
-                description: editData.description,
+                description: fullDescription,
                 clients: {
                     ...selectedRequest.clients,
                     name: editData.name,
@@ -969,9 +976,8 @@ export default function AdminPuntualPage() {
             }
         }
 
-        const pdfFileName = `Presupuesto_${budgetData.clientName.replace(/\s+/g, '_')}.pdf`;
-        doc.save(pdfFileName);
-        const pdfBlob = doc.output('blob');
+        const pdfArrayBuffer = doc.output('arraybuffer');
+        const pdfBlob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
 
         try {
             setUploadingAdmin(true);
@@ -1000,16 +1006,18 @@ export default function AdminPuntualPage() {
 
                 setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, admin_attachments: newAttachments, status: 'Presupuesto Enviado' } : r));
                 setSelectedRequest({ ...selectedRequest, admin_attachments: newAttachments, status: 'Presupuesto Enviado' });
-                alert('Presupuesto generado correctamente.');
+                alert('¡Presupuesto generado y subido a la nube correctamente!');
                 setShowBudgetModal(false);
             } else {
                 throw uploadError;
             }
         } catch (e: any) {
             console.error(e);
-            alert(`Error al subir el presupuesto a la nube: ${e.message || 'Error desconocido'}`);
+            alert(`Error al subir el presupuesto a la nube: ${e.message || JSON.stringify(e) || 'Error desconocido'}. El archivo se descargará localmente de todos modos.`);
         } finally {
             setUploadingAdmin(false);
+            const pdfFileName = `Presupuesto_${budgetData.clientName.replace(/\s+/g, '_')}.pdf`;
+            doc.save(pdfFileName);
         }
     };
 
@@ -1157,13 +1165,18 @@ export default function AdminPuntualPage() {
                                         <div style={{ marginBottom: '10px' }}><strong>Email:</strong> {selectedRequest.clients?.email}</div>
                                         <div style={{ marginBottom: '10px' }}><strong>Ubicación:</strong> {selectedRequest.clients?.location}</div>
                                         <div style={{ marginBottom: '10px' }}><strong>Vehículo:</strong> {selectedRequest.make_model} ({selectedRequest.year})</div>
+                                        <div style={{ marginBottom: '10px', color: '#D4AF37' }}>
+                                            <strong>Patente:</strong> {selectedRequest.description?.match(/Patente:\s*([^\n]+)/i)?.[1]?.trim() || 'No especificada'}
+                                        </div>
 
                                         <h3 style={{ borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '15px', marginTop: '20px' }}>Detalles del Daño</h3>
                                         <div style={{ marginBottom: '10px' }}><strong>Tipo:</strong> {selectedRequest.damage_type}</div>
                                         <div style={{ marginBottom: '10px' }}><strong>Ubicación:</strong> {(selectedRequest.damage_location || []).join(', ')}</div>
                                         <div style={{ marginBottom: '10px' }}>
                                             <strong>Nota del Cliente:</strong>
-                                            <p style={{ background: '#222', padding: '10px', borderRadius: '5px', marginTop: '5px', color: '#ccc', whiteSpace: 'pre-wrap' }}>{selectedRequest.description || 'Sin notas.'}</p>
+                                            <p style={{ background: '#222', padding: '10px', borderRadius: '5px', marginTop: '5px', color: '#ccc', whiteSpace: 'pre-wrap' }}>
+                                                {selectedRequest.description?.replace(/Patente:\s*[^\n]+(\n\n)?/i, '') || 'Sin notas.'}
+                                            </p>
                                         </div>
                                     </>
                                 ) : (
@@ -1176,6 +1189,7 @@ export default function AdminPuntualPage() {
                                             <input type="text" value={editData.make_model} onChange={(e) => handleEditChange('make_model', e.target.value)} placeholder="Vehículo" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
                                             <input type="text" value={editData.year} onChange={(e) => handleEditChange('year', e.target.value)} placeholder="Año" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
                                         </div>
+                                        <input type="text" value={editData.licensePlate} onChange={(e) => handleEditChange('licensePlate', e.target.value)} placeholder="Patente" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px', borderColor: '#D4AF37' }} />
                                         <h4 style={{ marginTop: '15px', color: '#888' }}>Detalles</h4>
                                         <select value={editData.damage_type} onChange={(e) => handleEditChange('damage_type', e.target.value)} style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }}>
                                             <option value="ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)">ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)</option>
