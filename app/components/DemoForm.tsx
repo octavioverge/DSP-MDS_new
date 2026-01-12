@@ -12,7 +12,7 @@ export default function DemoForm() {
         model: '',
         year: '',
         color: '',
-        damageLocation: '',
+        damageLocation: [] as string[],
         damageOrigin: '',
         paintStatus: 'No sabe',
         damageCount: '',
@@ -21,6 +21,12 @@ export default function DemoForm() {
         terms1: false,
         terms2: false
     });
+
+    const damageLocations = [
+        "CAPOT", "TECHO", "GUARDABARROS DELANTERO", "GUARDABARRO TRASERO",
+        "PUERTA DELANTERA", "PUERTA TRASERA", "TAPA/PORTON- BAÚL",
+        "PARAGOLPE", "PARANTE DE TECHO", "OTRO"
+    ];
 
     const [files, setFiles] = useState<FileList | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,6 +43,18 @@ export default function DemoForm() {
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
+    };
+
+    const handleLocationChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { value, checked } = e.target;
+        setFormData(prev => {
+            const currentList = prev.damageLocation;
+            if (checked) {
+                return { ...prev, damageLocation: [...currentList, value] };
+            } else {
+                return { ...prev, damageLocation: currentList.filter(loc => loc !== value) };
+            }
+        });
     };
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +103,7 @@ export default function DemoForm() {
                 vehicle_make: formData.make,
                 vehicle_year: formData.year,
                 vehicle_color: formData.color,
-                damage_location: formData.damageLocation,
+                damage_location: formData.damageLocation.join(', '),
                 damage_origin: formData.damageOrigin,
                 paint_status: formData.paintStatus,
                 damage_count: formData.damageCount,
@@ -116,7 +134,7 @@ export default function DemoForm() {
                     <p><strong>Color:</strong> ${formData.color}</p>
 
                     <h3>Información del Daño</h3>
-                    <p><strong>Ubicación:</strong> ${formData.damageLocation}</p>
+                    <p><strong>Ubicación:</strong> ${formData.damageLocation.join(', ')}</p>
                     <p><strong>Origen:</strong> ${formData.damageOrigin}</p>
                     <p><strong>Estado Pintura:</strong> ${formData.paintStatus}</p>
                     <p><strong>Cantidad Aprox:</strong> ${formData.damageCount}</p>
@@ -212,7 +230,7 @@ export default function DemoForm() {
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Año</label>
-                                <input type="text" name="year" value={formData.year} onChange={handleInputChange} />
+                                <input type="number" name="year" value={formData.year} onChange={handleInputChange} min="1900" max="2099" />
                             </div>
                             <div className="form-group">
                                 <label>Color</label>
@@ -225,9 +243,24 @@ export default function DemoForm() {
                     <div style={{ marginTop: '30px' }}>
                         <h4 style={{ color: '#fff', borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '20px', fontSize: '1.2rem' }}>Información del Daño</h4>
                         <div className="form-row">
-                            <div className="form-group">
-                                <label>Ubicación de la abolladura</label>
-                                <input type="text" name="damageLocation" placeholder="Ej: Puerta conductor, Techo..." value={formData.damageLocation} onChange={handleInputChange} />
+                            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                                <label style={{ display: 'block', marginBottom: '10px', color: '#D4AF37' }}>UBICACIÓN DEL DAÑO *</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                                    {damageLocations.map(loc => (
+                                        <label key={loc} style={{ display: 'flex', alignItems: 'center', fontWeight: 'normal', cursor: 'pointer', color: '#ccc' }}>
+                                            <input
+                                                type="checkbox"
+                                                name="locationGroup"
+                                                value={loc}
+                                                checked={formData.damageLocation.includes(loc)}
+                                                onChange={handleLocationChange}
+                                                className="checkbox-custom"
+                                                style={{ marginRight: '10px', width: '20px' }}
+                                            />
+                                            {loc}
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label>Origen del daño</label>
@@ -252,7 +285,7 @@ export default function DemoForm() {
                             </div>
                             <div className="form-group">
                                 <label>Cantidad aprox. de abolladuras</label>
-                                <input type="text" name="damageCount" value={formData.damageCount} onChange={handleInputChange} />
+                                <input type="number" name="damageCount" value={formData.damageCount} onChange={handleInputChange} min="0" />
                             </div>
                         </div>
 
