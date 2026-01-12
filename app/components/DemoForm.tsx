@@ -289,11 +289,11 @@ export default function DemoForm() {
                     {/* Términos */}
                     <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '5px', marginTop: '30px', border: '1px solid #333' }}>
                         <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '15px', cursor: 'pointer' }}>
-                            <input type="checkbox" name="terms1" checked={formData.terms1} onChange={handleInputChange} style={{ width: 'auto', marginTop: '5px' }} />
+                            <input type="checkbox" name="terms1" checked={formData.terms1} onChange={handleInputChange} className="checkbox-custom" style={{ width: '20px' }} />
                             <span style={{ fontSize: '0.9rem', color: '#ddd' }}>Declaro haber leído y comprendido las Bases y Condiciones de la Demostración Técnica.</span>
                         </label>
                         <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
-                            <input type="checkbox" name="terms2" checked={formData.terms2} onChange={handleInputChange} style={{ width: 'auto', marginTop: '5px' }} />
+                            <input type="checkbox" name="terms2" checked={formData.terms2} onChange={handleInputChange} className="checkbox-custom" style={{ width: '20px' }} />
                             <span style={{ fontSize: '0.9rem', color: '#ddd' }}>Entiendo que la solicitud no garantiza el acceso y que la confirmación requiere una inspección presencial en el taller.</span>
                         </label>
                     </div>
