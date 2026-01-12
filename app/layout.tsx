@@ -23,7 +23,10 @@ export const metadata: Metadata = {
   keywords: ["sacabollos", "city bell", "la plata", "granizo", "desabollado sin pintura", "PDR", "chapista", "automotor", "bollos", "estética vehicular", "DSP-MDS"],
   authors: [{ name: "Matías Da Silva" }],
   creator: "Matías Da Silva",
-  metadataBase: new URL('https://www.desabolladosinpinturamds.com.ar'), // Replace with actual domain if different later
+  metadataBase: new URL('https://www.desabolladosinpinturamds.com.ar'),
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: "DSP-MDS | Técnico Sacabollos - Calidad Original",
     description: "Recuperamos la estética de tu vehículo sin repintar. Especialistas en granizo y bollos de estacionamiento en City Bell.",
