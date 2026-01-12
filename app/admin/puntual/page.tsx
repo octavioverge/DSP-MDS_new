@@ -399,7 +399,7 @@ export default function AdminPuntualPage() {
             clientEmail.includes(term) ||
             clientPhone.includes(term)
         );
-        const matchesStatus = statusFilter === 'Todos' || req.status === statusFilter;
+        const matchesStatus = statusFilter === 'Todos' ? req.status !== 'Papelera' : req.status === statusFilter;
         return matchesSearch && matchesStatus;
     }).sort((a, b) => {
         let aValue: any = '';
@@ -494,6 +494,63 @@ export default function AdminPuntualPage() {
         }
     };
 
+    const handleDeleteRequest = async (req: Request, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        if (req.status === 'Papelera') {
+            if (!confirm('¿Estás seguro de que deseás eliminar este registro PERMANENTEMENTE? Esta acción no se puede deshacer.')) return;
+
+            const { error } = await supabase
+                .from('service_puntual')
+                .delete()
+                .eq('id', req.id);
+
+            if (error) {
+                console.error('Error deleting:', error);
+                alert('Error al eliminar permanentemente');
+            } else {
+                setRequests(prev => prev.filter(r => r.id !== req.id));
+                if (selectedRequest?.id === req.id) setSelectedRequest(null);
+                alert('Registro eliminado permanentemente');
+            }
+        } else {
+            if (!confirm('¿Mover este registro a la papelera? Podrás recuperarlo luego.')) return;
+
+            const { error } = await supabase
+                .from('service_puntual')
+                .update({ status: 'Papelera' })
+                .eq('id', req.id);
+
+            if (error) {
+                console.error('Error moving to trash:', error);
+                alert('Error al mover a papelera');
+            } else {
+                setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: 'Papelera' } : r));
+                if (selectedRequest?.id === req.id) setSelectedRequest({ ...selectedRequest, status: 'Papelera' });
+                alert('Movido a la papelera');
+            }
+        }
+    };
+
+    const handleRestoreRequest = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('¿Restaurar este registro a estado Pendiente?')) return;
+
+        const { error } = await supabase
+            .from('service_puntual')
+            .update({ status: 'Pendiente' })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error restoring:', error);
+            alert('Error al restaurar');
+        } else {
+            setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'Pendiente' } : r));
+            if (selectedRequest?.id === id) setSelectedRequest({ ...selectedRequest, status: 'Pendiente' });
+            alert('Registro restaurado');
+        }
+    };
+
     const handleOpenDetail = (req: Request) => {
         setSelectedRequest(req);
         setAdminNote(req.admin_notes || '');
@@ -563,6 +620,30 @@ export default function AdminPuntualPage() {
         }
     };
 
+    const handleRemoveAttachment = async (index: number) => {
+        if (!selectedRequest || !selectedRequest.admin_attachments) return;
+
+        if (!confirm('¿Estás seguro de que querés eliminar este archivo adjunto?')) return;
+
+        const newAttachments = selectedRequest.admin_attachments.filter((_, i) => i !== index);
+
+        const { error } = await supabase
+            .from('service_puntual')
+            .update({ admin_attachments: newAttachments })
+            .eq('id', selectedRequest.id);
+
+        if (error) {
+            console.error('Error deleting attachment:', error);
+            alert('Error al eliminar el adjunto');
+        } else {
+            setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, admin_attachments: newAttachments } : r));
+            setSelectedRequest({ ...selectedRequest, admin_attachments: newAttachments });
+        }
+    };
+
+
+
+
     // Budget Functions
     const handleBudgetChange = (field: string, value: any) => {
         setBudgetData({ ...budgetData, [field]: value });
@@ -591,6 +672,8 @@ export default function AdminPuntualPage() {
         if (!selectedRequest) return;
 
         const doc = new jsPDF();
+        // ... (PDF generation logic omitted for brevity as it is unchanged here, but we are keeping the rest of the file intact)
+
         doc.setFillColor(20, 20, 20);
         doc.rect(0, 0, 210, 40, 'F');
 
@@ -1073,6 +1156,7 @@ export default function AdminPuntualPage() {
                         <option value="Turno Agendado">Turno Agendado</option>
                         <option value="Reparado">Reparado</option>
                         <option value="Cancelado">Cancelado</option>
+                        <option value="Papelera" style={{ color: '#ff6b6b' }}>🗑️ Papelera</option>
                     </select>
                 </div>
 
@@ -1119,9 +1203,43 @@ export default function AdminPuntualPage() {
                                             {req.status}
                                         </span>
                                     </td>
-                                    <td style={{ padding: '1rem' }}>
-                                        <button onClick={() => handleOpenDetail(req)} className="btn-gold" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+                                    <td style={{ padding: '1rem', display: 'flex', gap: '8px' }}>
+                                        <button onClick={() => handleOpenDetail(req)} className="btn-gold" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', flex: 1 }}>
                                             Ver Detalles
+                                        </button>
+
+                                        {req.status === 'Papelera' && (
+                                            <button
+                                                onClick={(e) => handleRestoreRequest(req.id, e)}
+                                                style={{
+                                                    padding: '0.4rem 0.8rem',
+                                                    fontSize: '0.8rem',
+                                                    background: '#4CAF50',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Restaurar"
+                                            >
+                                                <i className="fas fa-undo"></i>
+                                            </button>
+                                        )}
+
+                                        <button
+                                            onClick={(e) => handleDeleteRequest(req, e)}
+                                            style={{
+                                                padding: '0.4rem 0.8rem',
+                                                fontSize: '0.8rem',
+                                                background: req.status === 'Papelera' ? '#8b0000' : '#ff4444',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer'
+                                            }}
+                                            title={req.status === 'Papelera' ? "Eliminar Definitivamente" : "Mover a Papelera"}
+                                        >
+                                            <i className="fas fa-trash"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -1223,6 +1341,8 @@ export default function AdminPuntualPage() {
                                     <button onClick={() => openBudgetModal(selectedRequest)} className="btn-gold" style={{ width: '100%', marginBottom: '10px', background: '#222', border: '1px solid #D4AF37', padding: '10px', color: '#D4AF37' }}>
                                         <i className="fas fa-file-invoice-dollar"></i> Generar Nuevo Presupuesto
                                     </button>
+
+
                                     <hr style={{ borderColor: '#444', margin: '20px 0' }} />
                                     <label style={{ display: 'block', marginBottom: '5px' }}>Estado Actual</label>
                                     <select value={selectedRequest.status} onChange={(e) => handleStatusChange(selectedRequest.id, e.target.value)} style={{ width: '100%', padding: '10px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }}>
@@ -1245,15 +1365,25 @@ export default function AdminPuntualPage() {
                                         {selectedRequest.admin_attachments && selectedRequest.admin_attachments.map((url, idx) => {
                                             const isPdf = url.toLowerCase().includes('.pdf');
                                             return (
-                                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px', fontSize: '0.9rem' }}>
-                                                    <i className={`fas ${isPdf ? 'fa-file-pdf' : 'fa-paperclip'} text-gold`}></i>
-                                                    <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>{isPdf ? 'Ver PDF' : `Adjunto ${idx + 1}`}</a>
+                                                <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px', fontSize: '0.9rem', background: '#333', padding: '8px', borderRadius: '5px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                                                        <i className={`fas ${isPdf ? 'fa-file-pdf' : 'fa-paperclip'} text-gold`}></i>
+                                                        <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', textDecoration: 'underline', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>
+                                                            {isPdf ? 'Ver PDF' : `Adjunto ${idx + 1}`}
+                                                        </a>
+                                                    </div>
+                                                    <button onClick={() => handleRemoveAttachment(idx)} style={{ color: '#ff6b6b', background: 'none', border: 'none', cursor: 'pointer', padding: '5px' }} title="Eliminar adjunto">
+                                                        <i className="fas fa-trash"></i>
+                                                    </button>
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                    <input type="file" multiple onChange={handleAdminFileUpload} disabled={uploadingAdmin} style={{ fontSize: '0.9rem', color: '#ccc' }} />
-                                    {uploadingAdmin && <p style={{ color: '#D4AF37', fontSize: '0.8rem' }}>Subiendo...</p>}
+                                    <div style={{ marginTop: '15px', borderTop: '1px dashed #444', paddingTop: '10px' }}>
+                                        <label style={{ fontSize: '0.8rem', color: '#888', marginBottom: '5px', display: 'block' }}>Subir otros archivos:</label>
+                                        <input type="file" multiple onChange={handleAdminFileUpload} disabled={uploadingAdmin} style={{ fontSize: '0.9rem', color: '#ccc', width: '100%' }} />
+                                        {uploadingAdmin && <p style={{ color: '#D4AF37', fontSize: '0.8rem' }}>Subiendo...</p>}
+                                    </div>
                                 </div>
                             </div>
                         </div>
