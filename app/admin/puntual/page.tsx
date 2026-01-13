@@ -59,9 +59,10 @@ export default function AdminPuntualPage() {
     const [savingClient, setSavingClient] = useState(false);
 
     const damageLocations = [
-        "CAPOT", "TECHO", "GUARDABARROS DELANTERO", "GUARDABARRO TRASERO",
-        "PUERTA DELANTERA", "PUERTA TRASERA", "TAPA/PORTON- BAÚL",
-        "PARAGOLPE", "PARANTE DE TECHO", "OTRO"
+        "CAPOT", "TECHO", "GUARDABARROS DELANTERO IZQ", "GUARDABARROS DELANTERO DER",
+        "PUERTA DELANTERA IZQ", "PUERTA DELANTERA DER", "PUERTA TRASERA IZQ", "PUERTA TRASERA DER",
+        "GUARDABARRO TRASERO IZQ", "GUARDABARRO TRASERO DER", "TAPA DE BAÚL / CAJA",
+        "PARANTE IZQ", "PARANTE DER", "OTRO"
     ];
 
     const [isEditing, setIsEditing] = useState(false);
@@ -1196,8 +1197,8 @@ export default function AdminPuntualPage() {
                                     <td style={{ padding: '1rem' }}>
                                         <span style={{
                                             padding: '4px 8px', borderRadius: '4px',
-                                            backgroundColor: req.status === 'Pendiente' ? '#d4af3733' : '#333',
-                                            color: req.status === 'Pendiente' ? '#D4AF37' : '#fff',
+                                            backgroundColor: req.status === 'Pendiente' ? '#d4af3733' : req.status === 'Reparado' ? '#28a74533' : '#333',
+                                            color: req.status === 'Pendiente' ? '#D4AF37' : req.status === 'Reparado' ? '#28a745' : '#fff',
                                             fontSize: '0.8em'
                                         }}>
                                             {req.status}
@@ -1278,7 +1279,7 @@ export default function AdminPuntualPage() {
 
                                 {!isEditing ? (
                                     <>
-                                        <div style={{ marginBottom: '10px' }}><strong>Nombre:</strong> {selectedRequest.clients?.name}</div>
+                                        <div style={{ marginBottom: '10px' }}><strong>Nombre y Apellido:</strong> {selectedRequest.clients?.name}</div>
                                         <div style={{ marginBottom: '10px' }}><strong>Teléfono:</strong> <a href={`https://wa.me/${selectedRequest.clients?.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: '#90EE90' }}>{selectedRequest.clients?.phone} <i className="fab fa-whatsapp"></i></a></div>
                                         <div style={{ marginBottom: '10px' }}><strong>Email:</strong> {selectedRequest.clients?.email}</div>
                                         <div style={{ marginBottom: '10px' }}><strong>Ubicación:</strong> {selectedRequest.clients?.location}</div>
@@ -1299,7 +1300,7 @@ export default function AdminPuntualPage() {
                                     </>
                                 ) : (
                                     <div style={{ display: 'grid', gap: '10px' }}>
-                                        <input type="text" value={editData.name} onChange={(e) => handleEditChange('name', e.target.value)} placeholder="Nombre" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
+                                        <input type="text" value={editData.name} onChange={(e) => handleEditChange('name', e.target.value)} placeholder="Nombre y Apellido" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
                                         <input type="text" value={editData.phone} onChange={(e) => handleEditChange('phone', e.target.value)} placeholder="Teléfono" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
                                         <input type="email" value={editData.email} onChange={(e) => handleEditChange('email', e.target.value)} placeholder="Email" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
                                         <input type="text" value={editData.location} onChange={(e) => handleEditChange('location', e.target.value)} placeholder="Ubicación" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
@@ -1307,7 +1308,7 @@ export default function AdminPuntualPage() {
                                             <input type="text" value={editData.make_model} onChange={(e) => handleEditChange('make_model', e.target.value)} placeholder="Vehículo" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
                                             <input type="text" value={editData.year} onChange={(e) => handleEditChange('year', e.target.value)} placeholder="Año" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }} />
                                         </div>
-                                        <input type="text" value={editData.licensePlate} onChange={(e) => handleEditChange('licensePlate', e.target.value)} placeholder="Patente" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px', borderColor: '#D4AF37' }} />
+                                        <input type="text" value={editData.licensePlate} onChange={(e) => handleEditChange('licensePlate', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7))} placeholder="Patente" style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px', borderColor: '#D4AF37' }} />
                                         <h4 style={{ marginTop: '15px', color: '#888' }}>Detalles</h4>
                                         <select value={editData.damage_type} onChange={(e) => handleEditChange('damage_type', e.target.value)} style={{ width: '100%', padding: '8px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }}>
                                             <option value="ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)">ABOLLADURA PEQUEÑA (TAMAÑO MONEDA)</option>
@@ -1359,6 +1360,7 @@ export default function AdminPuntualPage() {
                                     <textarea value={adminNote} onChange={(e) => setAdminNote(e.target.value)} placeholder="Notas..." style={{ width: '100%', height: '100px', padding: '10px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px', resize: 'vertical' }} />
                                     <button onClick={handleSaveAdminNote} className="btn-gold" style={{ marginTop: '10px', width: '100%' }}>Guardar Nota</button>
                                 </div>
+
                                 <div>
                                     <label style={{ display: 'block', marginBottom: '5px' }}>Adjuntos (PDFs / Fotos Finales)</label>
                                     <div style={{ marginBottom: '10px' }}>
@@ -1403,12 +1405,12 @@ export default function AdminPuntualPage() {
                         <h2 style={{ color: '#D4AF37', marginBottom: '20px', textAlign: 'center' }}>Nuevo Cliente</h2>
 
                         <div style={{ marginBottom: '15px' }}>
-                            <label style={{ display: 'block', marginBottom: '5px' }}>Nombre *</label>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>Nombre y Apellido *</label>
                             <input type="text" value={newClientData.name} onChange={(e) => handleNewClientChange('name', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ display: 'block', marginBottom: '5px' }}>Teléfono *</label>
-                            <input type="text" value={newClientData.phone} onChange={(e) => handleNewClientChange('phone', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
+                            <input type="text" value={newClientData.phone} onChange={(e) => handleNewClientChange('phone', e.target.value.replace(/[^0-9]/g, ''))} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ display: 'block', marginBottom: '5px' }}>Localidad *</label>
@@ -1425,12 +1427,12 @@ export default function AdminPuntualPage() {
                             </div>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '5px' }}>Año</label>
-                                <input type="text" value={newClientData.year} onChange={(e) => handleNewClientChange('year', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
+                                <input type="text" value={newClientData.year} onChange={(e) => handleNewClientChange('year', e.target.value.replace(/[^0-9]/g, ''))} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
                             </div>
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ display: 'block', marginBottom: '5px' }}>Patente</label>
-                            <input type="text" value={newClientData.licensePlate} onChange={(e) => handleNewClientChange('licensePlate', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
+                            <input type="text" value={newClientData.licensePlate} onChange={(e) => handleNewClientChange('licensePlate', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7))} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#222', color: '#fff' }} />
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ display: 'block', marginBottom: '5px' }}>Tipo de Daño</label>
@@ -1507,7 +1509,7 @@ export default function AdminPuntualPage() {
                             </div>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Patente</label>
-                                <input type="text" value={budgetData.licensePlate} onChange={(e) => handleBudgetChange('licensePlate', e.target.value)} style={{ background: 'transparent', border: 'none', color: '#fff', width: '100%' }} />
+                                <input type="text" value={budgetData.licensePlate} onChange={(e) => handleBudgetChange('licensePlate', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7))} style={{ background: 'transparent', border: 'none', color: '#fff', width: '100%' }} />
                             </div>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#888' }}>Cliente</label>

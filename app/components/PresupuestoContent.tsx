@@ -19,9 +19,10 @@ export default function PresupuestoContent() {
     });
 
     const damageLocations = [
-        "CAPOT", "TECHO", "GUARDABARROS DELANTERO", "GUARDABARRO TRASERO",
-        "PUERTA DELANTERA", "PUERTA TRASERA", "TAPA/PORTON- BAÚL",
-        "PARAGOLPE", "PARANTE DE TECHO", "OTRO"
+        "CAPOT", "TECHO", "GUARDABARROS DELANTERO IZQ", "GUARDABARROS DELANTERO DER",
+        "PUERTA DELANTERA IZQ", "PUERTA DELANTERA DER", "PUERTA TRASERA IZQ", "PUERTA TRASERA DER",
+        "GUARDABARRO TRASERO IZQ", "GUARDABARRO TRASERO DER", "TAPA DE BAÚL / CAJA",
+        "PARANTE IZQ", "PARANTE DER", "OTRO"
     ];
 
     const [files, setFiles] = useState<FileList | null>(null);
@@ -42,6 +43,11 @@ export default function PresupuestoContent() {
                 return { ...prev, damageLocation: prev.damageLocation.filter(loc => loc !== value) };
             }
         });
+    };
+
+    const handleLicensePlateChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+        setFormData(prev => ({ ...prev, licensePlate: value }));
     };
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -266,7 +272,7 @@ export default function PresupuestoContent() {
                             <div className="form-group">
                                 <label htmlFor="licensePlate">PATENTE *</label>
                                 <input type="text" id="licensePlate" name="licensePlate" placeholder="Ej: AA123BB" required
-                                    value={formData.licensePlate} onChange={handleInputChange} />
+                                    value={formData.licensePlate} onChange={handleLicensePlateChange} />
                             </div>
 
                             {/* Damage Info */}
@@ -308,8 +314,8 @@ export default function PresupuestoContent() {
                                 <div style={{ fontSize: '0.85rem', color: '#ccc', marginBottom: '10px', lineHeight: '1.4' }}>
                                     <p>PARA TOMAR LAS FOTOS DEL DAÑO ELEGIR UN LUGAR CON LUZ TENUE (NO SOL DIRECTO), YA QUE LA LUZ INTENSA PUEDE DISTORSIONAR LA APARIENCIA DEL DAÑO.</p>
                                     <p>SI NO LOGRAS SUBIR LAS FOTOS, PODES ENVIARLAS POR WS CON TU NUMERO DE PATENTE AL 2215222729.</p>
-                                    <p>SUBA ENTRE 4 Y 6 FOTOS. ACLARACION IMPORTANTE: AL MENOS UNA FOTO DEBE SER PANORAMICA PARA QUE SE VEA TODO EL AUTO E IDENTIFICAR CON CLARIDAD EN QUE SECTOR ESTA EL DAÑO. TOME DE DISTINTOS ANGULOS MOSTRANDO EL ÁREA AFECTADA COMPLETA.</p>
-                                    <p>SUBI AL MENOS 4 FOTOS DEL DAÑO EN DIFERENTES ANGULOS DE ENFOQUE.</p>
+                                    <p>SUBA ENTRE 3 Y 5 FOTOS. ACLARACION IMPORTANTE: AL MENOS UNA FOTO DEBE SER PANORAMICA PARA QUE SE VEA TODO EL AUTO E IDENTIFICAR CON CLARIDAD EN QUE SECTOR ESTA EL DAÑO. TOME DE DISTINTOS ANGULOS MOSTRANDO EL ÁREA AFECTADA COMPLETA.</p>
+                                    <p>SUBI AL MENOS 3 FOTOS DEL DAÑO EN DIFERENTES ANGULOS DE ENFOQUE.</p>
                                 </div>
                                 <input type="file" id="attachment" name="attachment" accept="image/*,video/*" multiple onChange={handleFileChange} />
                                 <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Sube hasta 5 archivos compatibles. Tamaño máximo por archivo: 10 MB.</small>
