@@ -163,6 +163,26 @@ export default function AdminDashboard() {
                         </div>
                     </Link>
 
+                    {/* Card 5: Estadísticas */}
+                    <Link href="/admin/estadisticas" style={{ textDecoration: 'none' }}>
+                        <div className="dashboard-card" style={{
+                            background: '#1a1a1a',
+                            padding: '30px',
+                            borderRadius: '10px',
+                            border: '1px solid #333',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s, border-color 0.2s'
+                        }}>
+                            <div style={{ color: '#D4AF37', fontSize: '2rem', marginBottom: '15px' }}>
+                                <i className="fas fa-chart-line"></i>
+                            </div>
+                            <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '10px' }}>Estadísticas</h2>
+                            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                                Reportes de ingresos, autos reparados, métricas de rendimiento y contabilidad mensual.
+                            </p>
+                        </div>
+                    </Link>
+
                 </div>
             </div>
             <style jsx>{`

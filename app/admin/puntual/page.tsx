@@ -27,6 +27,9 @@ interface Request {
     description?: string;
     admin_notes?: string;
     admin_attachments?: string[];
+    budget_value?: number;
+    discounted_value?: number;
+    final_price?: number;
 }
 
 export default function AdminPuntualPage() {
@@ -449,7 +452,10 @@ export default function AdminPuntualPage() {
                     phone,
                     email,
                     location
-                )
+                ),
+                budget_value,
+                discounted_value,
+                final_price
             `)
             .order('created_at', { ascending: false });
 
@@ -475,17 +481,34 @@ export default function AdminPuntualPage() {
     };
 
     const handleStatusChange = async (id: string, newStatus: string) => {
+        let updatedReq: Partial<Request> = { status: newStatus };
+
+        // Logic to pre-fill final_price if moving to Reparado
+        if (newStatus === 'Reparado') {
+            const req = requests.find(r => r.id === id);
+            if (req && (!req.final_price || req.final_price === 0)) {
+                // If discounted_price exists and is > 0, use it. Otherwise use budget_value.
+                const suggestedPrice = (req.discounted_value && req.discounted_value > 0)
+                    ? req.discounted_value
+                    : (req.budget_value || 0);
+
+                if (suggestedPrice > 0) {
+                    updatedReq.final_price = suggestedPrice;
+                }
+            }
+        }
+
         setRequests(prev => prev.map(req =>
-            req.id === id ? { ...req, status: newStatus } : req
+            req.id === id ? { ...req, ...updatedReq } : req
         ));
 
         if (selectedRequest && selectedRequest.id === id) {
-            setSelectedRequest({ ...selectedRequest, status: newStatus });
+            setSelectedRequest({ ...selectedRequest, ...updatedReq });
         }
 
         const { error } = await supabase
             .from('service_puntual')
-            .update({ status: newStatus })
+            .update(updatedReq)
             .eq('id', id);
 
         if (error) {
@@ -1083,13 +1106,35 @@ export default function AdminPuntualPage() {
                 const currentAttachments = selectedRequest.admin_attachments || [];
                 const newAttachments = [...currentAttachments, publicUrl];
 
+                // Calculate budget values to save
+                const newBudgetValue = validItems.reduce((sum, item) => sum + Number(item.price), 0);
+                // If combo, apply 20% discount logic (0.8 multiplier), else same as subtotal
+                const newDiscountedValue = budgetData.isCombo ? newBudgetValue * 0.8 : newBudgetValue;
+
                 await supabase
                     .from('service_puntual')
-                    .update({ admin_attachments: newAttachments, status: 'Presupuesto Enviado' })
+                    .update({
+                        admin_attachments: newAttachments,
+                        status: 'Presupuesto Enviado',
+                        budget_value: newBudgetValue,
+                        discounted_value: newDiscountedValue
+                    })
                     .eq('id', selectedRequest.id);
 
-                setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, admin_attachments: newAttachments, status: 'Presupuesto Enviado' } : r));
-                setSelectedRequest({ ...selectedRequest, admin_attachments: newAttachments, status: 'Presupuesto Enviado' });
+                setRequests(prev => prev.map(r => r.id === selectedRequest.id ? {
+                    ...r,
+                    admin_attachments: newAttachments,
+                    status: 'Presupuesto Enviado',
+                    budget_value: newBudgetValue,
+                    discounted_value: newDiscountedValue
+                } : r));
+                setSelectedRequest({
+                    ...selectedRequest,
+                    admin_attachments: newAttachments,
+                    status: 'Presupuesto Enviado',
+                    budget_value: newBudgetValue,
+                    discounted_value: newDiscountedValue
+                });
                 alert('¡Presupuesto generado y subido a la nube correctamente!');
                 setShowBudgetModal(false);
             } else {
@@ -1129,20 +1174,29 @@ export default function AdminPuntualPage() {
     return (
         <div className="admin-dashboard" style={{ backgroundColor: '#111', minHeight: '100vh', color: '#eee', padding: '2rem', position: 'relative' }}>
             <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
-                    <div>
-                        <Link href="/admin" style={{ color: '#D4AF37', textDecoration: 'none', marginRight: '10px' }}><i className="fas fa-arrow-left"></i> Volver</Link>
-                        <h1 style={{ color: '#D4AF37', borderLeft: '3px solid #D4AF37', paddingLeft: '10px' }}>Gestión de Sacabollos Puntual</h1>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={() => setShowNewClientModal(true)} className="btn-gold" style={{ padding: '0.5rem 1rem' }}>
-                            <i className="fas fa-plus"></i> Nuevo Cliente
-                        </button>
-                        <button onClick={() => { setIsAuthenticated(false); localStorage.removeItem('admin_session'); }} style={{ padding: '0.5rem 1rem', background: '#333', border: 'none', color: '#fff', borderRadius: '5px', cursor: 'pointer' }}>
+                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', borderBottom: '1px solid #333', paddingBottom: '20px' }}>
+                    <h1 style={{ color: '#D4AF37', margin: 0 }}>Panel de Administración - Gestión Puntual</h1>
+                    <div style={{ display: 'flex', gap: '15px' }}>
+                        <Link href="/admin/estadisticas" className="btn-gold" style={{ textDecoration: 'none', padding: '10px 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <i className="fas fa-chart-line"></i> Estadísticas
+                        </Link>
+                        <button onClick={() => { localStorage.removeItem('admin_session'); setIsAuthenticated(false); }} style={{ background: 'none', border: '1px solid #ff4444', color: '#ff4444', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer' }}>
                             Cerrar Sesión
                         </button>
                     </div>
                 </header>
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <Link href="/admin" className="btn-gold" style={{ textDecoration: 'none', padding: '10px 20px', fontSize: '0.9rem', marginRight: '10px' }}>
+                                <i className="fas fa-arrow-left"></i> Volver a Inicio
+                            </Link>
+                        </div>
+                        <button onClick={() => setShowNewClientModal(true)} className="btn-gold" style={{ padding: '0.5rem 1rem', marginBottom: '20px' }}>
+                            <i className="fas fa-plus"></i> Nuevo Cliente
+                        </button>
+                    </div>
+                </div>
 
                 <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                     <input
@@ -1359,6 +1413,63 @@ export default function AdminPuntualPage() {
                                     <label style={{ display: 'block', marginBottom: '5px' }}>Notas Administrativas</label>
                                     <textarea value={adminNote} onChange={(e) => setAdminNote(e.target.value)} placeholder="Notas..." style={{ width: '100%', height: '100px', padding: '10px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px', resize: 'vertical' }} />
                                     <button onClick={handleSaveAdminNote} className="btn-gold" style={{ marginTop: '10px', width: '100%' }}>Guardar Nota</button>
+                                </div>
+
+                                <div style={{ marginBottom: '20px', background: '#252525', padding: '15px', borderRadius: '5px', border: '1px solid #444' }}>
+                                    <h4 style={{ color: '#D4AF37', marginBottom: '10px', marginTop: 0 }}>Valores del Servicio ($)</h4>
+
+                                    <div style={{ marginBottom: '10px' }}>
+                                        <label style={{ display: 'block', fontSize: '0.8rem', color: '#aaa', marginBottom: '2px' }}>Presupuesto Estimado</label>
+                                        <input
+                                            type="number"
+                                            value={selectedRequest.budget_value || ''}
+                                            onChange={async (e) => {
+                                                const val = parseFloat(e.target.value);
+                                                const newVal = isNaN(val) ? 0 : val;
+                                                setSelectedRequest({ ...selectedRequest, budget_value: newVal });
+                                                setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, budget_value: newVal } : r));
+                                                await supabase.from('service_puntual').update({ budget_value: newVal }).eq('id', selectedRequest.id);
+                                            }}
+                                            placeholder="0.00"
+                                            style={{ width: '100%', padding: '5px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '10px' }}>
+                                        <label style={{ display: 'block', fontSize: '0.8rem', color: '#aaa', marginBottom: '2px' }}>Valor con Descuento</label>
+                                        <input
+                                            type="number"
+                                            value={selectedRequest.discounted_value || ''}
+                                            onChange={async (e) => {
+                                                const val = parseFloat(e.target.value);
+                                                const newVal = isNaN(val) ? 0 : val;
+                                                setSelectedRequest({ ...selectedRequest, discounted_value: newVal });
+                                                setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, discounted_value: newVal } : r));
+                                                await supabase.from('service_puntual').update({ discounted_value: newVal }).eq('id', selectedRequest.id);
+                                            }}
+                                            placeholder="0.00"
+                                            style={{ width: '100%', padding: '5px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '3px' }}
+                                        />
+                                    </div>
+
+                                    {selectedRequest.status === 'Reparado' && (
+                                        <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px dashed #555' }}>
+                                            <label style={{ display: 'block', fontSize: '0.9rem', color: '#90EE90', marginBottom: '5px', fontWeight: 'bold' }}>Precio Final Cobrado</label>
+                                            <input
+                                                type="number"
+                                                value={selectedRequest.final_price || ''}
+                                                onChange={async (e) => {
+                                                    const val = parseFloat(e.target.value);
+                                                    const newVal = isNaN(val) ? 0 : val;
+                                                    setSelectedRequest({ ...selectedRequest, final_price: newVal });
+                                                    setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, final_price: newVal } : r));
+                                                    await supabase.from('service_puntual').update({ final_price: newVal }).eq('id', selectedRequest.id);
+                                                }}
+                                                placeholder="0.00"
+                                                style={{ width: '100%', padding: '10px', background: '#333', border: '1px solid #90EE90', color: '#90EE90', borderRadius: '5px', fontSize: '1.2rem', fontWeight: 'bold' }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
