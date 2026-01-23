@@ -30,6 +30,7 @@ interface Request {
     budget_value?: number;
     discounted_value?: number;
     final_price?: number;
+    scheduled_date?: string;
 }
 
 export default function AdminPuntualPage() {
@@ -43,6 +44,13 @@ export default function AdminPuntualPage() {
     const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
     const [adminNote, setAdminNote] = useState('');
     const [uploadingAdmin, setUploadingAdmin] = useState(false);
+
+    // Scheduling modal state
+    const [showScheduleModal, setShowScheduleModal] = useState(false);
+    const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string, newStatus: string } | null>(null);
+    const [scheduleDate, setScheduleDate] = useState('');
+    const [scheduleTime, setScheduleTime] = useState('09:00');
+    const [savingSchedule, setSavingSchedule] = useState(false);
 
     // New Client State
     const [showNewClientModal, setShowNewClientModal] = useState(false);
@@ -481,7 +489,27 @@ export default function AdminPuntualPage() {
     };
 
     const handleStatusChange = async (id: string, newStatus: string) => {
+        // If changing to "Turno Agendado", open scheduling modal
+        if (newStatus === 'Turno Agendado') {
+            setPendingStatusChange({ id, newStatus });
+            // Pre-fill with tomorrow's date
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            setScheduleDate(tomorrow.toISOString().split('T')[0]);
+            setScheduleTime('09:00');
+            setShowScheduleModal(true);
+            return;
+        }
+
+        await applyStatusChange(id, newStatus);
+    };
+
+    const applyStatusChange = async (id: string, newStatus: string, scheduledDate?: string) => {
         let updatedReq: Partial<Request> = { status: newStatus };
+
+        if (scheduledDate) {
+            updatedReq.scheduled_date = scheduledDate;
+        }
 
         // Logic to pre-fill final_price if moving to Reparado
         if (newStatus === 'Reparado') {
@@ -516,6 +544,36 @@ export default function AdminPuntualPage() {
             alert('No se pudo actualizar el estado en la base de datos');
             fetchRequests();
         }
+    };
+
+    const handleScheduleConfirm = async () => {
+        if (!pendingStatusChange || !scheduleDate) {
+            alert('Por favor selecciona una fecha para el turno');
+            return;
+        }
+
+        setSavingSchedule(true);
+        try {
+            const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}:00`);
+            await applyStatusChange(
+                pendingStatusChange.id,
+                pendingStatusChange.newStatus,
+                scheduledDateTime.toISOString()
+            );
+            setShowScheduleModal(false);
+            setPendingStatusChange(null);
+            alert(`Turno agendado para ${scheduledDateTime.toLocaleDateString('es-AR')} a las ${scheduleTime}`);
+        } catch (error) {
+            console.error('Error scheduling:', error);
+            alert('Error al agendar el turno');
+        } finally {
+            setSavingSchedule(false);
+        }
+    };
+
+    const handleScheduleCancel = () => {
+        setShowScheduleModal(false);
+        setPendingStatusChange(null);
     };
 
     const handleDeleteRequest = async (req: Request, e: React.MouseEvent) => {
@@ -1408,6 +1466,56 @@ export default function AdminPuntualPage() {
                                         <option value="Reparado">Reparado</option>
                                         <option value="Cancelado">Cancelado</option>
                                     </select>
+
+                                    {/* Show scheduled date if status is Turno Agendado */}
+                                    {selectedRequest.status === 'Turno Agendado' && selectedRequest.scheduled_date && (
+                                        <div style={{
+                                            marginTop: '15px',
+                                            background: 'rgba(76, 175, 80, 0.1)',
+                                            border: '1px solid rgba(76, 175, 80, 0.3)',
+                                            borderRadius: '8px',
+                                            padding: '12px 15px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            flexWrap: 'wrap',
+                                            gap: '10px'
+                                        }}>
+                                            <div>
+                                                <div style={{ color: '#4CAF50', fontSize: '0.85rem', marginBottom: '5px' }}>
+                                                    <i className="fas fa-calendar-check" style={{ marginRight: '8px' }}></i>
+                                                    Turno Agendado
+                                                </div>
+                                                <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                                    {new Date(selectedRequest.scheduled_date).toLocaleDateString('es-AR', {
+                                                        weekday: 'long',
+                                                        day: 'numeric',
+                                                        month: 'long',
+                                                        year: 'numeric'
+                                                    })}
+                                                    <span style={{ color: '#4CAF50', marginLeft: '10px' }}>
+                                                        {new Date(selectedRequest.scheduled_date).toLocaleTimeString('es-AR', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <Link
+                                                href="/admin/calendario"
+                                                style={{
+                                                    color: '#4CAF50',
+                                                    textDecoration: 'none',
+                                                    fontSize: '0.85rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px'
+                                                }}
+                                            >
+                                                Ver en Calendario <i className="fas fa-external-link-alt"></i>
+                                            </Link>
+                                        </div>
+                                    )}
                                 </div>
                                 <div style={{ marginBottom: '20px' }}>
                                     <label style={{ display: 'block', marginBottom: '5px' }}>Notas Administrativas</label>
@@ -1858,6 +1966,166 @@ export default function AdminPuntualPage() {
                     </div>
                 )
             }
+
+            {/* Schedule Appointment Modal */}
+            {showScheduleModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    zIndex: 2000, padding: '20px'
+                }} onClick={handleScheduleCancel}>
+                    <div style={{
+                        backgroundColor: '#1a1a1a',
+                        width: '450px',
+                        maxWidth: '95%',
+                        borderRadius: '15px',
+                        border: '1px solid #333',
+                        padding: '30px',
+                        position: 'relative'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={handleScheduleCancel}
+                            style={{
+                                position: 'absolute',
+                                top: '15px',
+                                right: '15px',
+                                background: 'none',
+                                border: 'none',
+                                color: '#fff',
+                                fontSize: '1.5rem',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            &times;
+                        </button>
+
+                        <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+                            <div style={{ fontSize: '3rem', marginBottom: '10px' }}>
+                                <i className="fas fa-calendar-check" style={{ color: '#D4AF37' }}></i>
+                            </div>
+                            <h2 style={{ color: '#D4AF37', margin: 0 }}>Agendar Turno</h2>
+                            <p style={{ color: '#888', marginTop: '10px', fontSize: '0.9rem' }}>
+                                Selecciona la fecha y hora para el turno del cliente
+                            </p>
+                        </div>
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: '0.9rem' }}>
+                                <i className="fas fa-calendar" style={{ marginRight: '8px' }}></i>
+                                Fecha del Turno *
+                            </label>
+                            <input
+                                type="date"
+                                value={scheduleDate}
+                                onChange={(e) => setScheduleDate(e.target.value)}
+                                min={new Date().toISOString().split('T')[0]}
+                                style={{
+                                    width: '100%',
+                                    padding: '15px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #444',
+                                    background: '#252525',
+                                    color: '#fff',
+                                    fontSize: '1rem'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '25px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: '0.9rem' }}>
+                                <i className="fas fa-clock" style={{ marginRight: '8px' }}></i>
+                                Hora del Turno
+                            </label>
+                            <input
+                                type="time"
+                                value={scheduleTime}
+                                onChange={(e) => setScheduleTime(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '15px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #444',
+                                    background: '#252525',
+                                    color: '#fff',
+                                    fontSize: '1rem'
+                                }}
+                            />
+                        </div>
+
+                        {scheduleDate && (
+                            <div style={{
+                                background: 'rgba(212, 175, 55, 0.1)',
+                                border: '1px solid rgba(212, 175, 55, 0.3)',
+                                borderRadius: '8px',
+                                padding: '15px',
+                                marginBottom: '20px',
+                                textAlign: 'center'
+                            }}>
+                                <p style={{ color: '#D4AF37', margin: 0, fontSize: '0.9rem' }}>
+                                    <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
+                                    El turno quedará agendado para:
+                                </p>
+                                <p style={{ color: '#fff', margin: '10px 0 0 0', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                                    {new Date(`${scheduleDate}T${scheduleTime}`).toLocaleDateString('es-AR', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    })} a las {scheduleTime}
+                                </p>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                onClick={handleScheduleCancel}
+                                style={{
+                                    flex: 1,
+                                    padding: '15px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #444',
+                                    background: '#333',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    fontSize: '1rem'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleScheduleConfirm}
+                                disabled={savingSchedule || !scheduleDate}
+                                className="btn-gold"
+                                style={{
+                                    flex: 2,
+                                    padding: '15px',
+                                    borderRadius: '8px',
+                                    fontSize: '1rem',
+                                    opacity: (!scheduleDate || savingSchedule) ? 0.6 : 1
+                                }}
+                            >
+                                {savingSchedule ? (
+                                    <>
+                                        <i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>
+                                        Agendando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-check" style={{ marginRight: '8px' }}></i>
+                                        Confirmar Turno
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        <p style={{ color: '#666', fontSize: '0.8rem', textAlign: 'center', marginTop: '15px' }}>
+                            <i className="fas fa-info-circle" style={{ marginRight: '5px' }}></i>
+                            El turno aparecerá en el calendario del panel
+                        </p>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }
