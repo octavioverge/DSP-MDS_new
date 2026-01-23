@@ -94,14 +94,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           ></iframe>
         </noscript>
         {/* End Google Tag Manager (noscript) */}
+        {/* Datos estructurados - Negocio Local */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "AutoRepair",
+              "@type": "AutoBodyShop",
               "name": "DSP-MDS Técnico Sacabollos",
-              "image": "https://www.desabolladosinpinturamds.com.ar/assets/logoHeader.png",
+              "alternateName": "Desabollado Sin Pintura MDS",
+              "description": "Taller especializado en desabollado sin pintura (PDR) en City Bell. Reparación profesional de daños por granizo, golpes de estacionamiento y portazos manteniendo la pintura original del vehículo.",
+              "image": [
+                "https://www.desabolladosinpinturamds.com.ar/assets/logoHeader.png",
+                "https://www.desabolladosinpinturamds.com.ar/assets/taller-sacabollos-city-bell.jpg"
+              ],
               "@id": "https://www.desabolladosinpinturamds.com.ar",
               "url": "https://www.desabolladosinpinturamds.com.ar",
               "telephone": "+5492215222729",
@@ -118,6 +124,51 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 "latitude": -34.8753842,
                 "longitude": -58.0616247
               },
+              "areaServed": [
+                { "@type": "City", "name": "City Bell" },
+                { "@type": "City", "name": "Gonnet" },
+                { "@type": "City", "name": "Villa Elisa" },
+                { "@type": "City", "name": "La Plata" },
+                { "@type": "City", "name": "Ringuelet" }
+              ],
+              "hasOfferCatalog": {
+                "@type": "OfferCatalog",
+                "name": "Servicios de Desabollado Sin Pintura",
+                "itemListElement": [
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Reparación de daños por granizo",
+                      "description": "Eliminación de abolladuras causadas por tormentas de granizo sin afectar la pintura original"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Reparación de golpes de estacionamiento",
+                      "description": "Reparación de bollos y hundimientos por golpes en estacionamientos"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Reparación de portazos",
+                      "description": "Eliminación de marcas y abolladuras causadas por puertas de otros vehículos"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Desabollado de capó y techo",
+                      "description": "Reparación de abolladuras en superficies amplias manteniendo la pintura de fábrica"
+                    }
+                  }
+                ]
+              },
               "openingHoursSpecification": {
                 "@type": "OpeningHoursSpecification",
                 "dayOfWeek": [
@@ -131,6 +182,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 "closes": "18:00"
               },
               "priceRange": "$$",
+              "paymentAccepted": "Efectivo, Transferencia bancaria, Mercado Pago",
+              "currenciesAccepted": "ARS",
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "5.0",
+                "reviewCount": "30",
+                "bestRating": "5"
+              },
               "sameAs": [
                 "https://www.instagram.com/dspmds.arg/",
                 "https://maps.app.goo.gl/xEx31qHu9ckUGTpB8"

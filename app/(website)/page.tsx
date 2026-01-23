@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import ReviewsCarousel from '@/app/components/ReviewsCarousel';
+import Script from 'next/script';
 
 import type { Metadata } from 'next';
 
@@ -8,6 +9,54 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+};
+
+// Datos estructurados FAQ para SEO
+const faqData = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "¿Qué es el desabollado sin pintura (PDR)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "El desabollado sin pintura (PDR - Paintless Dent Repair) es una técnica especializada que permite reparar abolladuras en la carrocería del vehículo sin necesidad de lijar, masillar ni repintar. Se utilizan herramientas especiales para masajear el metal desde el interior, devolviendo la forma original y conservando la pintura de fábrica."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Sirve para reparar daños por granizo?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sí, el PDR es la técnica ideal para reparar daños por granizo. Permite eliminar las múltiples abolladuras pequeñas que deja una tormenta de granizo sin afectar la pintura original del vehículo, manteniendo su valor de reventa y evitando costosos trabajos de pintura."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Se pueden reparar golpes de estacionamiento?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Absolutamente. Los golpes de estacionamiento, portazos y bollos menores son casos ideales para el desabollado sin pintura. Si la pintura no está dañada (sin rayaduras profundas ni descascarado), la abolladura puede eliminarse completamente dejando el panel como nuevo."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Cuánto tiempo toma la reparación?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "La mayoría de las reparaciones de bollos pequeños se completan en el mismo día. Para daños más extensos como granizo severo, puede tomar entre 2 a 5 días dependiendo de la cantidad de abolladuras. Siempre es más rápido que el proceso tradicional de pintura."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Trabajan en City Bell y alrededores?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sí, nuestro taller está ubicado en City Bell y brindamos servicio a clientes de toda la zona: Gonnet, Villa Elisa, Ringuelet, La Plata y alrededores. Podés acercarte al taller o consultar por presupuesto enviando fotos del daño por WhatsApp."
+      }
+    }
+  ]
 };
 
 export default function Home() {
@@ -67,17 +116,19 @@ export default function Home() {
               Soy técnico especialista en el sistema PDR (Paintless Dent Repair), con taller propio de <strong>Sacabollos en City Bell</strong>.
               Mi misión es ofrecer reparaciones profesionales que priorizan la conservación de la pintura original y la calidad del resultado final.
             </p>
+            <p style={{ marginTop: '1rem', color: '#aaa' }}>
+              <strong style={{ color: '#D4AF37' }}>Zona de cobertura:</strong> Brindo servicio de desabollado sin pintura en <strong>City Bell, Gonnet, Villa Elisa, Ringuelet, La Plata y alrededores</strong>.
+              Especializado en reparación de daños por granizo, golpes de estacionamiento y portazos.
+            </p>
             <ul className="about-list">
               <li><i className="fas fa-check-circle text-gold"></i> Formación en carrocerías (CESVI Argentina).</li>
-              <li><i className="fas fa-check-circle text-gold"></i> Capacitación en Gestión de Calidad ISO 9001:2015.
-              </li>
+              <li><i className="fas fa-check-circle text-gold"></i> Capacitación en Gestión de Calidad ISO 9001:2015.</li>
               <li><i className="fas fa-check-circle text-gold"></i> Certificación profesional por ACSAA.</li>
-
             </ul>
           </div>
           <div className="about-image fade-in-right">
             <div className="image-frame">
-              <img src="/assets/icon.jpg" alt="Taller DSP-MDS" />
+              <img src="/assets/taller-sacabollos-city-bell.jpg" alt="Taller de Sacabollos DSP-MDS en City Bell - Desabollado Sin Pintura" />
             </div>
           </div>
         </div>
@@ -94,14 +145,14 @@ export default function Home() {
 
           <div className="certificates-grid">
             <div className="cert-card fade-in-up delay-100">
-              <img src="/assets/certificado1.jpg" alt="Certificado Técnico Sacabollos ACSAA" />
+              <img src="/assets/certificado-sacabollos-acsaa-city-bell.jpg" alt="Certificado Técnico Sacabollos ACSAA - DSP-MDS City Bell" />
               <div className="cert-info">
                 <h3>Certificación Profesional</h3>
                 <p>ACSAA - Asociación Civil de Sacabollos</p>
               </div>
             </div>
             <div className="cert-card fade-in-up delay-200">
-              <img src="/assets/certificado2.jpg" alt="Certificado Técnico CESVI Argentina - Carrocería" />
+              <img src="/assets/certificado-carroceria-cesvi-argentina.jpg" alt="Certificado Técnico Carrocería CESVI Argentina - Formación Profesional" />
               <div className="cert-info">
                 <h3>Capacitación Técnica</h3>
                 <p>CESVI Argentina</p>
@@ -139,6 +190,91 @@ export default function Home() {
             <a href="https://maps.app.goo.gl/xEx31qHu9ckUGTpB8" target="_blank" rel="noopener noreferrer" className="btn-gold">
               <i className="fab fa-google" style={{ marginRight: '8px' }}></i> Ver todas las reseñas en Google Maps
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section - SEO Optimized */}
+      <section id="faq" className="faq section-padding bg-darker">
+        <div className="container">
+          <div className="text-center mb-5 fade-in-up">
+            <h2 className="section-title">Preguntas <span className="text-gold">Frecuentes</span></h2>
+            <div className="gold-line mx-auto"></div>
+            <p>Todo lo que necesitás saber sobre el desabollado sin pintura</p>
+          </div>
+
+          <div className="faq-grid">
+            <div className="faq-item fade-in-up">
+              <h3 className="faq-question">
+                <i className="fas fa-question-circle text-gold"></i>
+                ¿Qué es el desabollado sin pintura (PDR)?
+              </h3>
+              <p className="faq-answer">
+                El desabollado sin pintura (PDR - Paintless Dent Repair) es una técnica especializada que permite reparar abolladuras
+                en la carrocería del vehículo sin necesidad de lijar, masillar ni repintar. Se utilizan herramientas especiales para
+                masajear el metal desde el interior, devolviendo la forma original y conservando la pintura de fábrica.
+              </p>
+            </div>
+
+            <div className="faq-item fade-in-up">
+              <h3 className="faq-question">
+                <i className="fas fa-cloud-rain text-gold"></i>
+                ¿Sirve para reparar daños por granizo?
+              </h3>
+              <p className="faq-answer">
+                Sí, el PDR es la técnica ideal para <strong>reparar daños por granizo</strong>. Permite eliminar las múltiples
+                abolladuras pequeñas que deja una tormenta de granizo sin afectar la pintura original del vehículo, manteniendo
+                su valor de reventa y evitando costosos trabajos de pintura.
+              </p>
+            </div>
+
+            <div className="faq-item fade-in-up">
+              <h3 className="faq-question">
+                <i className="fas fa-car-crash text-gold"></i>
+                ¿Se pueden reparar golpes de estacionamiento?
+              </h3>
+              <p className="faq-answer">
+                Absolutamente. Los <strong>golpes de estacionamiento, portazos y bollos menores</strong> son casos ideales para
+                el desabollado sin pintura. Si la pintura no está dañada (sin rayaduras profundas ni descascarado), la abolladura
+                puede eliminarse completamente dejando el panel como nuevo.
+              </p>
+            </div>
+
+            <div className="faq-item fade-in-up">
+              <h3 className="faq-question">
+                <i className="fas fa-clock text-gold"></i>
+                ¿Cuánto tiempo toma la reparación?
+              </h3>
+              <p className="faq-answer">
+                La mayoría de las reparaciones de bollos pequeños se completan en el mismo día. Para daños más extensos como
+                granizo severo, puede tomar entre 2 a 5 días dependiendo de la cantidad de abolladuras. Siempre es más rápido
+                que el proceso tradicional de pintura.
+              </p>
+            </div>
+
+            <div className="faq-item fade-in-up">
+              <h3 className="faq-question">
+                <i className="fas fa-map-marker-alt text-gold"></i>
+                ¿Trabajan en City Bell y alrededores?
+              </h3>
+              <p className="faq-answer">
+                Sí, nuestro taller está ubicado en <strong>City Bell</strong> y brindamos servicio a clientes de toda la zona:
+                <strong>Gonnet, Villa Elisa, Ringuelet, La Plata y alrededores</strong>. Podés acercarte al taller o consultar
+                por presupuesto enviando fotos del daño por WhatsApp.
+              </p>
+            </div>
+
+            <div className="faq-item fade-in-up">
+              <h3 className="faq-question">
+                <i className="fas fa-car text-gold"></i>
+                ¿Qué daños se pueden reparar en el capó?
+              </h3>
+              <p className="faq-answer">
+                Los <strong>bollos en el capó</strong> causados por granizo, objetos que caen o impactos leves son perfectamente
+                reparables con PDR. El capó suele tener buen acceso desde abajo, lo que facilita el trabajo. También reparamos
+                abolladuras en techo, puertas, guardabarros y otros paneles.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -210,6 +346,13 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* JSON-LD FAQ Schema */}
+      <Script
+        id="faq-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }}
+      />
     </>
   );
 }
