@@ -103,67 +103,7 @@ export default function AdminDashboard() {
                         </div>
                     </Link>
 
-                    {/* Card 2: Cursos */}
-                    <Link href="/admin/cursos" style={{ textDecoration: 'none' }}>
-                        <div className="dashboard-card" style={{
-                            background: '#1a1a1a',
-                            padding: '30px',
-                            borderRadius: '10px',
-                            border: '1px solid #333',
-                            cursor: 'pointer',
-                            transition: 'transform 0.2s, border-color 0.2s'
-                        }}>
-                            <div style={{ color: '#D4AF37', fontSize: '2rem', marginBottom: '15px' }}>
-                                <i className="fas fa-chalkboard-teacher"></i>
-                            </div>
-                            <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '10px' }}>Cursos y Capacitación</h2>
-                            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
-                                Administración de alumnos, inscripciones a cursos iniciales/avanzados, pagos y fechas de cursada.
-                            </p>
-                        </div>
-                    </Link>
-
-                    {/* Card 3: Cobertura */}
-                    <Link href="/admin/cobertura" style={{ textDecoration: 'none' }}>
-                        <div className="dashboard-card" style={{
-                            background: '#1a1a1a',
-                            padding: '30px',
-                            borderRadius: '10px',
-                            border: '1px solid #333',
-                            cursor: 'pointer',
-                            transition: 'transform 0.2s, border-color 0.2s'
-                        }}>
-                            <div style={{ color: '#D4AF37', fontSize: '2rem', marginBottom: '15px' }}>
-                                <i className="fas fa-file-contract"></i>
-                            </div>
-                            <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '10px' }}>Cobertura Mensual</h2>
-                            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
-                                Gestión de suscripciones mensuales, flotas de vehículos, vencimientos y planes de cobertura.
-                            </p>
-                        </div>
-                    </Link>
-
-                    {/* Card 4: Demos */}
-                    <Link href="/admin/demos" style={{ textDecoration: 'none' }}>
-                        <div className="dashboard-card" style={{
-                            background: '#1a1a1a',
-                            padding: '30px',
-                            borderRadius: '10px',
-                            border: '1px solid #333',
-                            cursor: 'pointer',
-                            transition: 'transform 0.2s, border-color 0.2s'
-                        }}>
-                            <div style={{ color: '#D4AF37', fontSize: '2rem', marginBottom: '15px' }}>
-                                <i className="fas fa-eye"></i>
-                            </div>
-                            <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '10px' }}>Demostraciones</h2>
-                            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
-                                Solicitudes de demostración técnica, evaluación de abolladuras y agenda de inspecciones.
-                            </p>
-                        </div>
-                    </Link>
-
-                    {/* Card 5: Estadísticas */}
+                    {/* Card 2: Estadísticas */}
                     <Link href="/admin/estadisticas" style={{ textDecoration: 'none' }}>
                         <div className="dashboard-card" style={{
                             background: '#1a1a1a',
@@ -183,7 +123,7 @@ export default function AdminDashboard() {
                         </div>
                     </Link>
 
-                    {/* Card 6: Insumos */}
+                    {/* Card 3: Insumos */}
                     <Link href="/admin/insumos" style={{ textDecoration: 'none' }}>
                         <div className="dashboard-card" style={{
                             background: '#1a1a1a',
@@ -199,6 +139,66 @@ export default function AdminDashboard() {
                             <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '10px' }}>Insumos</h2>
                             <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
                                 Registro de gastos y compras de insumos, herramientas y materiales del negocio.
+                            </p>
+                        </div>
+                    </Link>
+
+                    {/* Card 4: Cursos */}
+                    <Link href="/admin/cursos" style={{ textDecoration: 'none' }}>
+                        <div className="dashboard-card" style={{
+                            background: '#1a1a1a',
+                            padding: '30px',
+                            borderRadius: '10px',
+                            border: '1px solid #333',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s, border-color 0.2s'
+                        }}>
+                            <div style={{ color: '#D4AF37', fontSize: '2rem', marginBottom: '15px' }}>
+                                <i className="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '10px' }}>Cursos y Capacitación</h2>
+                            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                                Administración de alumnos, inscripciones a cursos iniciales/avanzados, pagos y fechas de cursada.
+                            </p>
+                        </div>
+                    </Link>
+
+                    {/* Card 5: Cobertura */}
+                    <Link href="/admin/cobertura" style={{ textDecoration: 'none' }}>
+                        <div className="dashboard-card" style={{
+                            background: '#1a1a1a',
+                            padding: '30px',
+                            borderRadius: '10px',
+                            border: '1px solid #333',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s, border-color 0.2s'
+                        }}>
+                            <div style={{ color: '#D4AF37', fontSize: '2rem', marginBottom: '15px' }}>
+                                <i className="fas fa-file-contract"></i>
+                            </div>
+                            <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '10px' }}>Cobertura Mensual</h2>
+                            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                                Gestión de suscripciones mensuales, flotas de vehículos, vencimientos y planes de cobertura.
+                            </p>
+                        </div>
+                    </Link>
+
+                    {/* Card 6: Demos */}
+                    <Link href="/admin/demos" style={{ textDecoration: 'none' }}>
+                        <div className="dashboard-card" style={{
+                            background: '#1a1a1a',
+                            padding: '30px',
+                            borderRadius: '10px',
+                            border: '1px solid #333',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s, border-color 0.2s'
+                        }}>
+                            <div style={{ color: '#D4AF37', fontSize: '2rem', marginBottom: '15px' }}>
+                                <i className="fas fa-eye"></i>
+                            </div>
+                            <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '10px' }}>Demostraciones</h2>
+                            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                                Solicitudes de demostración técnica, evaluación de abolladuras y agenda de inspecciones.
                             </p>
                         </div>
                     </Link>
