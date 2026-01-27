@@ -1064,14 +1064,16 @@ export default function AdminPuntualPage() {
             const subtotal = validItems.reduce((sum, item) => sum + Number(item.price), 0);
             const finalTotal = subtotal * 0.8;
 
-            doc.setFontSize(10);
-            doc.setTextColor(0, 0, 0); // Black
-            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9);
+            doc.setTextColor(80, 80, 80); // Gray
+            doc.setFont("helvetica", "italic");
 
-            doc.text("20% DE DESCUENTO POR COMBO (cantidad de abolladuras a reparar en una sesión)", 15, finalY);
+            doc.text("20% de descuento aplicado", 15, finalY);
             finalY += 7;
 
             doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0); // Black
+            doc.setFont("helvetica", "bold");
             doc.text(`Total final con descuento aplicado: $${finalTotal.toLocaleString()}`, 15, finalY);
             finalY += 10;
         }
@@ -1264,10 +1266,10 @@ export default function AdminPuntualPage() {
                     <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ padding: '10px', borderRadius: '5px', border: '1px solid #444', backgroundColor: '#222', color: '#fff', minWidth: '150px' }}>
                         <option value="Todos">Todos los estados</option>
                         <option value="Pendiente">Pendiente</option>
-                        <option value="Contactado">Contactado</option>
                         <option value="Presupuesto Enviado">Presupuesto Enviado</option>
                         <option value="Turno Agendado">Turno Agendado</option>
                         <option value="Reparado">Reparado</option>
+                        <option value="Reparado (factura)">Reparado (factura)</option>
                         <option value="Cancelado">Cancelado</option>
                         <option value="Papelera" style={{ color: '#ff6b6b' }}>🗑️ Papelera</option>
                     </select>
@@ -1309,8 +1311,8 @@ export default function AdminPuntualPage() {
                                     <td style={{ padding: '1rem' }}>
                                         <span style={{
                                             padding: '4px 8px', borderRadius: '4px',
-                                            backgroundColor: req.status === 'Pendiente' ? '#d4af3733' : req.status === 'Reparado' ? '#28a74533' : '#333',
-                                            color: req.status === 'Pendiente' ? '#D4AF37' : req.status === 'Reparado' ? '#28a745' : '#fff',
+                                            backgroundColor: req.status === 'Pendiente' ? '#d4af3733' : req.status === 'Reparado' ? '#28a74533' : req.status === 'Reparado (factura)' ? '#17a2b833' : '#333',
+                                            color: req.status === 'Pendiente' ? '#D4AF37' : req.status === 'Reparado' ? '#28a745' : req.status === 'Reparado (factura)' ? '#17a2b8' : '#fff',
                                             fontSize: '0.8em'
                                         }}>
                                             {req.status}
@@ -1460,10 +1462,10 @@ export default function AdminPuntualPage() {
                                     <label style={{ display: 'block', marginBottom: '5px' }}>Estado Actual</label>
                                     <select value={selectedRequest.status} onChange={(e) => handleStatusChange(selectedRequest.id, e.target.value)} style={{ width: '100%', padding: '10px', background: '#333', border: '1px solid #555', color: '#fff', borderRadius: '5px' }}>
                                         <option value="Pendiente">Pendiente</option>
-                                        <option value="Contactado">Contactado</option>
                                         <option value="Presupuesto Enviado">Presupuesto Enviado</option>
                                         <option value="Turno Agendado">Turno Agendado</option>
                                         <option value="Reparado">Reparado</option>
+                                        <option value="Reparado (factura)">Reparado (factura)</option>
                                         <option value="Cancelado">Cancelado</option>
                                     </select>
 
@@ -1560,7 +1562,7 @@ export default function AdminPuntualPage() {
                                         />
                                     </div>
 
-                                    {selectedRequest.status === 'Reparado' && (
+                                    {(selectedRequest.status === 'Reparado' || selectedRequest.status === 'Reparado (factura)') && (
                                         <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px dashed #555' }}>
                                             <label style={{ display: 'block', fontSize: '0.9rem', color: '#90EE90', marginBottom: '5px', fontWeight: 'bold' }}>Precio Final Cobrado</label>
                                             <input
@@ -1932,7 +1934,7 @@ export default function AdminPuntualPage() {
                                 <div style={{ marginBottom: '10px' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                         <input type="checkbox" checked={budgetData.isCombo} onChange={(e) => handleBudgetChange('isCombo', e.target.checked)} style={{ marginRight: '10px' }} />
-                                        Aplicar Descuento Combo (20%)
+                                        Aplicar Descuento (20%)
                                     </label>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px', borderTop: '1px solid #444', paddingTop: '10px', fontSize: '1.5rem', color: '#D4AF37', fontWeight: 'bold' }}>

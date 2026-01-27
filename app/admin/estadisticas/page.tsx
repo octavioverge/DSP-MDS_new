@@ -57,7 +57,7 @@ export default function EstadisticasPage() {
                     name
                 )
             `)
-            .eq('status', 'Reparado')
+            .in('status', ['Reparado', 'Reparado (factura)'])
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -87,7 +87,7 @@ export default function EstadisticasPage() {
         return reqMonth === monthFilter;
     });
 
-    // Calculations
+    // Calculations - TOTALES
     const totalRevenue = filteredRequests.reduce((sum, req) => sum + (req.final_price || 0), 0);
     const totalPotential = filteredRequests.reduce((sum, req) => sum + (req.budget_value || 0), 0);
     const totalDiscounts = filteredRequests.reduce((sum, req) => {
@@ -101,8 +101,17 @@ export default function EstadisticasPage() {
         }
         return sum;
     }, 0);
-
     const averageTicket = filteredRequests.length > 0 ? totalRevenue / filteredRequests.length : 0;
+
+    // Calculations - Solo REPARADO (sin factura)
+    const reparadoNormal = filteredRequests.filter(req => req.status === 'Reparado');
+    const reparadoNormalRevenue = reparadoNormal.reduce((sum, req) => sum + (req.final_price || 0), 0);
+    const reparadoNormalAvgTicket = reparadoNormal.length > 0 ? reparadoNormalRevenue / reparadoNormal.length : 0;
+
+    // Calculations - Solo REPARADO (FACTURA)
+    const reparadoFactura = filteredRequests.filter(req => req.status === 'Reparado (factura)');
+    const reparadoFacturaRevenue = reparadoFactura.reduce((sum, req) => sum + (req.final_price || 0), 0);
+    const reparadoFacturaAvgTicket = reparadoFactura.length > 0 ? reparadoFacturaRevenue / reparadoFactura.length : 0;
 
     if (!isAuthenticated) {
         return (
@@ -144,7 +153,9 @@ export default function EstadisticasPage() {
                     </div>
                 </header>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+
+                {/* TOTALES GENERALES */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
                     <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #333' }}>
                         <label style={{ display: 'block', color: '#888', marginBottom: '10px', fontSize: '0.9rem' }}>Filtrar por Mes</label>
                         <input
@@ -155,18 +166,66 @@ export default function EstadisticasPage() {
                         />
                     </div>
                     <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #D4AF37', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Ingresos Reales</span>
+                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Ingresos Totales</span>
                         <span style={{ color: '#28a745', fontSize: '2.5rem', fontWeight: 'bold' }}>${totalRevenue.toLocaleString()}</span>
                     </div>
                     <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #333', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Autos Reparados</span>
+                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Total Autos Reparados</span>
                         <span style={{ color: '#D4AF37', fontSize: '2.5rem', fontWeight: 'bold' }}>{filteredRequests.length}</span>
                     </div>
                     <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #333', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Ticket Promedio</span>
+                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Ticket Promedio General</span>
                         <span style={{ color: '#aaa', fontSize: '2.5rem', fontWeight: 'bold' }}>${Math.round(averageTicket).toLocaleString()}</span>
                     </div>
                 </div>
+
+                {/* DISCRIMINACIÓN POR TIPO */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                    {/* Reparado (sin factura) */}
+                    <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #28a745' }}>
+                        <h3 style={{ color: '#28a745', marginTop: 0, marginBottom: '15px', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ background: '#28a74533', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>Reparado</span>
+                            Sin Factura
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
+                            <div>
+                                <span style={{ color: '#888', fontSize: '0.8rem', display: 'block' }}>Ingresos</span>
+                                <span style={{ color: '#28a745', fontSize: '1.5rem', fontWeight: 'bold' }}>${reparadoNormalRevenue.toLocaleString()}</span>
+                            </div>
+                            <div>
+                                <span style={{ color: '#888', fontSize: '0.8rem', display: 'block' }}>Autos</span>
+                                <span style={{ color: '#28a745', fontSize: '1.5rem', fontWeight: 'bold' }}>{reparadoNormal.length}</span>
+                            </div>
+                            <div>
+                                <span style={{ color: '#888', fontSize: '0.8rem', display: 'block' }}>Ticket Prom.</span>
+                                <span style={{ color: '#28a745', fontSize: '1.5rem', fontWeight: 'bold' }}>${Math.round(reparadoNormalAvgTicket).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Reparado (con factura) */}
+                    <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #17a2b8' }}>
+                        <h3 style={{ color: '#17a2b8', marginTop: 0, marginBottom: '15px', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ background: '#17a2b833', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>Reparado</span>
+                            Con Factura
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
+                            <div>
+                                <span style={{ color: '#888', fontSize: '0.8rem', display: 'block' }}>Ingresos</span>
+                                <span style={{ color: '#17a2b8', fontSize: '1.5rem', fontWeight: 'bold' }}>${reparadoFacturaRevenue.toLocaleString()}</span>
+                            </div>
+                            <div>
+                                <span style={{ color: '#888', fontSize: '0.8rem', display: 'block' }}>Autos</span>
+                                <span style={{ color: '#17a2b8', fontSize: '1.5rem', fontWeight: 'bold' }}>{reparadoFactura.length}</span>
+                            </div>
+                            <div>
+                                <span style={{ color: '#888', fontSize: '0.8rem', display: 'block' }}>Ticket Prom.</span>
+                                <span style={{ color: '#17a2b8', fontSize: '1.5rem', fontWeight: 'bold' }}>${Math.round(reparadoFacturaAvgTicket).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
 
                 <div className="table-responsive" style={{ overflowX: 'auto', background: '#1a1a1a', borderRadius: '10px', padding: '20px', border: '1px solid #333' }}>
                     <h3 style={{ color: '#D4AF37', marginBottom: '20px' }}>Detalle de Operaciones (Reparados)</h3>
@@ -176,6 +235,7 @@ export default function EstadisticasPage() {
                                 <th style={{ padding: '1rem' }}>Fecha</th>
                                 <th style={{ padding: '1rem' }}>Cliente</th>
                                 <th style={{ padding: '1rem' }}>Vehículo</th>
+                                <th style={{ padding: '1rem', textAlign: 'center' }}>Tipo</th>
                                 <th style={{ padding: '1rem', textAlign: 'right' }}>Presupuestado</th>
                                 <th style={{ padding: '1rem', textAlign: 'right' }}>Con Descuento</th>
                                 <th style={{ padding: '1rem', textAlign: 'right' }}>Cobrado Final</th>
@@ -183,22 +243,34 @@ export default function EstadisticasPage() {
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Cargando datos...</td></tr>
+                                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>Cargando datos...</td></tr>
                             ) : filteredRequests.length === 0 ? (
-                                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>No hay registros en este período.</td></tr>
+                                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>No hay registros en este período.</td></tr>
                             ) : (
                                 filteredRequests.map(req => (
                                     <tr key={req.id} style={{ borderBottom: '1px solid #333' }}>
                                         <td style={{ padding: '1rem' }}>{new Date(req.created_at).toLocaleDateString()}</td>
                                         <td style={{ padding: '1rem' }}>{req.clients?.name || 'Desconocido'}</td>
                                         <td style={{ padding: '1rem' }}>{req.make_model} ({req.year})</td>
+                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                            <span style={{
+                                                padding: '4px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 'bold',
+                                                backgroundColor: req.status === 'Reparado (factura)' ? '#17a2b833' : '#28a74533',
+                                                color: req.status === 'Reparado (factura)' ? '#17a2b8' : '#28a745'
+                                            }}>
+                                                {req.status === 'Reparado (factura)' ? 'FACTURA' : 'SIN FACT.'}
+                                            </span>
+                                        </td>
                                         <td style={{ padding: '1rem', textAlign: 'right', color: '#ccc' }}>
                                             ${(req.budget_value || 0).toLocaleString()}
                                         </td>
                                         <td style={{ padding: '1rem', textAlign: 'right', color: '#ccc' }}>
                                             {req.discounted_value ? `$${req.discounted_value.toLocaleString()}` : '-'}
                                         </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right', color: '#28a745', fontWeight: 'bold' }}>
+                                        <td style={{ padding: '1rem', textAlign: 'right', color: req.status === 'Reparado (factura)' ? '#17a2b8' : '#28a745', fontWeight: 'bold' }}>
                                             ${(req.final_price || 0).toLocaleString()}
                                         </td>
                                     </tr>
