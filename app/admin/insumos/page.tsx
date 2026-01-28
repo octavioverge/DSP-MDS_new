@@ -299,6 +299,14 @@ export default function AdminInsumosPage() {
     const totalGastos = activeInsumos.reduce((sum, i) => sum + i.precio, 0);
     const filteredTotal = filteredInsumos.reduce((sum, i) => sum + i.precio, 0);
 
+    // Calculate totals per socio (Mati y Octa)
+    const gastosMati = activeInsumos
+        .filter(i => i.empleado.toLowerCase().includes('mati'))
+        .reduce((sum, i) => sum + i.precio, 0);
+    const gastosOcta = activeInsumos
+        .filter(i => i.empleado.toLowerCase().includes('octa'))
+        .reduce((sum, i) => sum + i.precio, 0);
+
     if (!isAuthenticated) {
         return (
             <div style={{
@@ -436,15 +444,27 @@ export default function AdminInsumosPage() {
                                 ${totalGastos.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                             </div>
                         </div>
-                        <div style={{ textAlign: 'center' }}>
+                        <div style={{ textAlign: 'center', borderLeft: '1px solid #444', paddingLeft: '1rem' }}>
+                            <div style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.5rem' }}>💰 Gastos Mati</div>
+                            <div style={{ color: '#4CAF50', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                ${gastosMati.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center', borderLeft: '1px solid #444', paddingLeft: '1rem' }}>
+                            <div style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.5rem' }}>💰 Gastos Octa</div>
+                            <div style={{ color: '#2196F3', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                ${gastosOcta.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center', borderLeft: '1px solid #444', paddingLeft: '1rem' }}>
                             <div style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Registros</div>
-                            <div style={{ color: '#fff', fontSize: '2rem', fontWeight: 'bold' }}>
+                            <div style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}>
                                 {activeInsumos.length}
                             </div>
                         </div>
-                        <div style={{ textAlign: 'center' }}>
+                        <div style={{ textAlign: 'center', borderLeft: '1px solid #444', paddingLeft: '1rem' }}>
                             <div style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Promedio</div>
-                            <div style={{ color: '#fff', fontSize: '2rem', fontWeight: 'bold' }}>
+                            <div style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}>
                                 ${activeInsumos.length > 0 ? (totalGastos / activeInsumos.length).toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '0.00'}
                             </div>
                         </div>
@@ -483,7 +503,7 @@ export default function AdminInsumosPage() {
                 }}>
                     <input
                         type="text"
-                        placeholder="Buscar por producto, vendedor o empleado..."
+                        placeholder="Buscar por producto, vendedor o socio..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{
@@ -525,7 +545,7 @@ export default function AdminInsumosPage() {
                             cursor: 'pointer'
                         }}
                     >
-                        <option value="Todos">Todos los empleados</option>
+                        <option value="Todos">Todos los socios</option>
                         {uniqueEmpleados.map(emp => (
                             <option key={emp} value={emp}>{emp}</option>
                         ))}
@@ -599,7 +619,7 @@ export default function AdminInsumosPage() {
                                     <th style={{ padding: '15px', textAlign: 'center', color: '#D4AF37' }}>Cant.</th>
                                     <th style={{ padding: '15px', textAlign: 'right', color: '#D4AF37' }}>Precio</th>
                                     <th style={{ padding: '15px', textAlign: 'left', color: '#D4AF37' }}>Vendedor</th>
-                                    <th style={{ padding: '15px', textAlign: 'left', color: '#D4AF37' }}>Empleado</th>
+                                    <th style={{ padding: '15px', textAlign: 'left', color: '#D4AF37' }}>Socio</th>
                                     <th style={{ padding: '15px', textAlign: 'left', color: '#D4AF37' }}>Categoría</th>
                                     {viewMode === 'deleted' && (
                                         <th style={{ padding: '15px', textAlign: 'left', color: '#D4AF37' }}>Eliminado</th>
@@ -857,21 +877,25 @@ export default function AdminInsumosPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', color: '#aaa' }}>Empleado que compró *</label>
-                                    <input
-                                        type="text"
+                                    <label style={{ display: 'block', marginBottom: '5px', color: '#aaa' }}>Socio que compró *</label>
+                                    <select
                                         value={formData.empleado}
                                         onChange={(e) => handleFormChange('empleado', e.target.value)}
-                                        placeholder="Nombre del empleado"
                                         style={{
                                             width: '100%',
                                             padding: '10px',
                                             borderRadius: '5px',
                                             border: '1px solid #444',
                                             background: '#222',
-                                            color: '#fff'
+                                            color: '#fff',
+                                            cursor: 'pointer'
                                         }}
-                                    />
+                                    >
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Mati">Mati</option>
+                                        <option value="Octa">Octa</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
                                 </div>
                             </div>
 
