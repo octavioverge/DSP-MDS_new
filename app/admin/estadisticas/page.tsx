@@ -18,12 +18,20 @@ interface Request {
     status: string;
 }
 
+type PeriodType = 'dia' | 'semana' | 'mes' | 'anual';
+
 export default function EstadisticasPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState('');
     const [repairedRequests, setRepairedRequests] = useState<Request[]>([]);
     const [loading, setLoading] = useState(false);
-    const [monthFilter, setMonthFilter] = useState('');
+
+    // Período de filtro
+    const [periodType, setPeriodType] = useState<PeriodType>('mes');
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const now = new Date();
+        return now.toISOString().split('T')[0]; // YYYY-MM-DD
+    });
 
     useEffect(() => {
         const session = localStorage.getItem('admin_session');
@@ -31,13 +39,6 @@ export default function EstadisticasPage() {
             setIsAuthenticated(true);
             fetchRepairedRequests();
         }
-
-        // Set default month filter to current month YYYY-MM
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        setMonthFilter(`${yyyy}-${mm}`);
-
     }, []);
 
     const fetchRepairedRequests = async () => {
@@ -79,28 +80,92 @@ export default function EstadisticasPage() {
         }
     };
 
-    // Filter Logic
+    // Calcular rango de fechas según el período seleccionado
+    const getDateRange = () => {
+        const date = new Date(selectedDate + 'T12:00:00'); // Evitar problemas de timezone
+        let startDate: Date;
+        let endDate: Date;
+        let label: string;
+
+        switch (periodType) {
+            case 'dia':
+                startDate = new Date(date);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(date);
+                endDate.setHours(23, 59, 59, 999);
+                label = date.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                break;
+            case 'semana':
+                const dayOfWeek = date.getDay();
+                const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                startDate = new Date(date);
+                startDate.setDate(date.getDate() - diffToMonday);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+                endDate.setHours(23, 59, 59, 999);
+                const formatShort = (d: Date) => d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+                label = `Semana del ${formatShort(startDate)} al ${formatShort(endDate)}`;
+                break;
+            case 'mes':
+                startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                endDate.setHours(23, 59, 59, 999);
+                label = date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+                break;
+            case 'anual':
+                startDate = new Date(date.getFullYear(), 0, 1);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(date.getFullYear(), 11, 31);
+                endDate.setHours(23, 59, 59, 999);
+                label = `Año ${date.getFullYear()}`;
+                break;
+            default:
+                startDate = new Date();
+                endDate = new Date();
+                label = '';
+        }
+
+        return { startDate, endDate, label };
+    };
+
+    const { startDate, endDate, label: periodLabel } = getDateRange();
+
+    // Filter Logic basado en el período
     const filteredRequests = repairedRequests.filter(req => {
-        if (!monthFilter) return true;
-        const date = new Date(req.created_at);
-        const reqMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        return reqMonth === monthFilter;
+        const reqDate = new Date(req.created_at);
+        return reqDate >= startDate && reqDate <= endDate;
     });
+
+    // Navegación de período
+    const navigatePeriod = (direction: 'prev' | 'next') => {
+        const date = new Date(selectedDate + 'T12:00:00');
+
+        switch (periodType) {
+            case 'dia':
+                date.setDate(date.getDate() + (direction === 'next' ? 1 : -1));
+                break;
+            case 'semana':
+                date.setDate(date.getDate() + (direction === 'next' ? 7 : -7));
+                break;
+            case 'mes':
+                date.setMonth(date.getMonth() + (direction === 'next' ? 1 : -1));
+                break;
+            case 'anual':
+                date.setFullYear(date.getFullYear() + (direction === 'next' ? 1 : -1));
+                break;
+        }
+
+        setSelectedDate(date.toISOString().split('T')[0]);
+    };
+
+    const goToToday = () => {
+        setSelectedDate(new Date().toISOString().split('T')[0]);
+    };
 
     // Calculations - TOTALES
     const totalRevenue = filteredRequests.reduce((sum, req) => sum + (req.final_price || 0), 0);
-    const totalPotential = filteredRequests.reduce((sum, req) => sum + (req.budget_value || 0), 0);
-    const totalDiscounts = filteredRequests.reduce((sum, req) => {
-        // If discount value is present, difference between budget and discount is the discount amount
-        // Or if user just enters the final discounted value directly. 
-        // Assuming discounted_value is the PRICE AFTER DISCOUNT.
-        // So discount_amount = budget_value - discounted_value (if discounted_value > 0)
-        // If discounted_value is 0, assumes no discount or full price.
-        if (req.budget_value && req.discounted_value) {
-            return sum + (req.budget_value - req.discounted_value);
-        }
-        return sum;
-    }, 0);
     const averageTicket = filteredRequests.length > 0 ? totalRevenue / filteredRequests.length : 0;
 
     // Calculations - Solo REPARADO (sin factura)
@@ -145,7 +210,7 @@ export default function EstadisticasPage() {
                     <h1 style={{ color: '#D4AF37', margin: 0 }}>Estadísticas y Reportes</h1>
                     <div style={{ display: 'flex', gap: '15px' }}>
                         <Link href="/admin" className="btn-gold" style={{ textDecoration: 'none', padding: '10px 20px', fontSize: '0.9rem' }}>
-                            <i className="fas fa-arrow-left"></i> Volver a Inicio
+                            ← Volver a Inicio
                         </Link>
                         <button onClick={() => { localStorage.removeItem('admin_session'); setIsAuthenticated(false); }} style={{ background: 'none', border: '1px solid #ff4444', color: '#ff4444', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer' }}>
                             Cerrar Sesión
@@ -153,19 +218,112 @@ export default function EstadisticasPage() {
                     </div>
                 </header>
 
+                {/* SELECTOR DE PERÍODO */}
+                <div style={{
+                    background: 'linear-gradient(135deg, #1a1a1a 0%, #252525 100%)',
+                    padding: '20px',
+                    borderRadius: '10px',
+                    border: '1px solid #D4AF37',
+                    marginBottom: '20px'
+                }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center', justifyContent: 'space-between' }}>
+                        {/* Tipo de período */}
+                        <div style={{ display: 'flex', gap: '5px', background: '#111', padding: '5px', borderRadius: '8px' }}>
+                            {(['dia', 'semana', 'mes', 'anual'] as PeriodType[]).map(type => (
+                                <button
+                                    key={type}
+                                    onClick={() => setPeriodType(type)}
+                                    style={{
+                                        padding: '10px 20px',
+                                        background: periodType === type ? '#D4AF37' : 'transparent',
+                                        color: periodType === type ? '#000' : '#888',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: periodType === type ? 'bold' : 'normal',
+                                        transition: 'all 0.2s',
+                                        textTransform: 'capitalize'
+                                    }}
+                                >
+                                    {type === 'dia' ? 'Día' : type === 'anual' ? 'Año' : type.charAt(0).toUpperCase() + type.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Navegación y selector de fecha */}
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <button
+                                onClick={() => navigatePeriod('prev')}
+                                style={{
+                                    padding: '10px 15px',
+                                    background: '#333',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem'
+                                }}
+                            >
+                                ←
+                            </button>
+
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                style={{
+                                    background: '#333',
+                                    border: '1px solid #555',
+                                    color: '#fff',
+                                    padding: '10px 15px',
+                                    borderRadius: '5px',
+                                    fontSize: '1rem'
+                                }}
+                            />
+
+                            <button
+                                onClick={() => navigatePeriod('next')}
+                                style={{
+                                    padding: '10px 15px',
+                                    background: '#333',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem'
+                                }}
+                            >
+                                →
+                            </button>
+
+                            <button
+                                onClick={goToToday}
+                                style={{
+                                    padding: '10px 15px',
+                                    background: '#D4AF37',
+                                    color: '#000',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                Hoy
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Label del período */}
+                    <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                        <span style={{ color: '#D4AF37', fontSize: '1.3rem', fontWeight: 'bold', textTransform: 'capitalize' }}>
+                            {periodLabel}
+                        </span>
+                    </div>
+                </div>
 
                 {/* TOTALES GENERALES */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-                    <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #333' }}>
-                        <label style={{ display: 'block', color: '#888', marginBottom: '10px', fontSize: '0.9rem' }}>Filtrar por Mes</label>
-                        <input
-                            type="month"
-                            value={monthFilter}
-                            onChange={(e) => setMonthFilter(e.target.value)}
-                            style={{ background: '#333', border: '1px solid #555', color: '#fff', padding: '10px', borderRadius: '5px', width: '100%' }}
-                        />
-                    </div>
-                    <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #D4AF37', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+                    <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #28a745', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                         <span style={{ color: '#888', fontSize: '0.9rem' }}>Ingresos Totales</span>
                         <span style={{ color: '#28a745', fontSize: '2.5rem', fontWeight: 'bold' }}>${totalRevenue.toLocaleString()}</span>
                     </div>
@@ -174,7 +332,7 @@ export default function EstadisticasPage() {
                         <span style={{ color: '#D4AF37', fontSize: '2.5rem', fontWeight: 'bold' }}>{filteredRequests.length}</span>
                     </div>
                     <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '1px solid #333', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Ticket Promedio General</span>
+                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Ticket Promedio</span>
                         <span style={{ color: '#aaa', fontSize: '2.5rem', fontWeight: 'bold' }}>${Math.round(averageTicket).toLocaleString()}</span>
                     </div>
                 </div>
