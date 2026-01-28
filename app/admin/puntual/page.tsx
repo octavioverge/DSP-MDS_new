@@ -1074,7 +1074,7 @@ export default function AdminPuntualPage() {
             doc.setFontSize(14);
             doc.setTextColor(0, 0, 0); // Black
             doc.setFont("helvetica", "bold");
-            doc.text(`Total final con descuento aplicado: $${finalTotal.toLocaleString()}`, 15, finalY);
+            doc.text(`Total final con descuento en efectivo: $${finalTotal.toLocaleString()}`, 15, finalY);
             finalY += 10;
         }
 
